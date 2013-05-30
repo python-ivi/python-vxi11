@@ -22,6 +22,7 @@ Original source: http://svn.python.org/projects/python/trunk/Demo/rpc/rpc.py
 import xdrlib
 import socket
 import os
+import struct
 
 RPCVERSION = 2
 
@@ -217,8 +218,7 @@ class Client:
 def sendfrag(sock, last, frag):
     x = len(frag)
     if last: x = x | 0x80000000
-    header = bytes([int(x>>24 & 0xff),  int(x>>16 & 0xff), \
-              int(x>>8 & 0xff), int(x & 0xff)])
+    header = struct.pack(">I", x)
     sock.send(header + frag)
 
 def sendrecord(sock, record):
@@ -228,8 +228,7 @@ def recvfrag(sock):
     header = sock.recv(4)
     if len(header) < 4:
         raise EOFError
-    x = int(header[0]<<24 | header[1]<<16 | \
-        header[2]<<8 | header[3])
+    x = struct.unpack(">I", header[0:4])[0]
     last = ((x & 0x80000000) != 0)
     n = int(x & 0x7fffffff)
     frag = b''
