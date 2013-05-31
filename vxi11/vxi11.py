@@ -305,6 +305,9 @@ class Instrument(object):
     
     def open(self):
         "Open connection to VXI-11 instrument"
+        if self.client is None:
+            self.client = CoreClient(host)
+        
         error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, self.name.encode("utf-8"))
         
         if error:
@@ -317,6 +320,8 @@ class Instrument(object):
         "Close connection"
         self.client.distroy_link(self.link)
         self.client.close()
+        self.link = None
+        self.client = None
 
     def write_raw(self, data):
         "Write binary data to instrument"
