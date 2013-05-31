@@ -306,7 +306,7 @@ class Instrument(object):
     def open(self):
         "Open connection to VXI-11 instrument"
         if self.client is None:
-            self.client = CoreClient(host)
+            self.client = CoreClient(self.host)
         
         error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, self.name.encode("utf-8"))
         
