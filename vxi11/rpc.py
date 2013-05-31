@@ -749,10 +749,11 @@ def test(host = ''):
     list = pmap.dump()
     list.sort()
     for prog, vers, prot, port in list:
-        print(prog, vers, end=' ')
-        if prot == IPPROTO_TCP: print('tcp', end=' ')
-        elif prot == IPPROTO_UDP: print('udp', end=' ')
-        else: print(prot, end=' ')
-        print(port)
+        st = "%d %d " % (prog, vers)
+        if prot == IPPROTO_TCP: st += "tcp "
+        elif prot == IPPROTO_UDP: st += "udp "
+        else: st += "%d " % prot
+        st += "%d" % port
+        print(st)
 
 
