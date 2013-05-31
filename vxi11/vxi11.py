@@ -305,7 +305,7 @@ class Instrument(object):
     
     def open(self):
         "Open connection to VXI-11 instrument"
-        error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, bytes(self.name, "utf-8"))
+        error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, self.name.encode("utf-8"))
         
         if error:
             raise Vxi11Error("error creating link: %d" % error)
@@ -392,14 +392,14 @@ class Instrument(object):
         if message.__class__ is tuple or message.__class__ is list:
             # recursive call for a list of commands
             for message_i in message:
-                self.write(message_i)
+                self.write(message_i, encoding)
             return
         
-        self.write_raw(bytes(message, encoding))
+        self.write_raw(str(message).encode(encoding))
 
     def read(self, num=-1, encoding = 'utf-8'):
         "Read string from instrument"
-        return str(self.read_raw(num), encoding).rstrip('\r\n')
+        return self.read_raw(num).decode(encoding).rstrip('\r\n')
 
     def ask(self, message, num=-1, encoding = 'utf-8'):
         "Write then read string"
