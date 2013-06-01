@@ -366,7 +366,7 @@ class Instrument(object):
         
         if self.term_char is not None:
             flags = OP_FLAG_TERMCHAR_SET
-            term_char = bytes(str(self.term_char), 'utf-8')[0]
+            term_char = str(self.term_char).encode('utf-8')[0]
         
         read_data = b''
         
