@@ -318,7 +318,7 @@ class Instrument(object):
         
     def close(self):
         "Close connection"
-        self.client.distroy_link(self.link)
+        self.client.destroy_link(self.link)
         self.client.close()
         self.link = None
         self.client = None
