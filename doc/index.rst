@@ -1,21 +1,28 @@
-.. Python VXI11 documentation master file, created by
-   sphinx-quickstart on Fri Oct 26 00:08:05 2012.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. Python VXI11 documentation master file
 
-Welcome to Python VXI11's documentation!
-========================================
+Welcome to Python VXI11's documentation
+=======================================
+
+This Python package supports the VXI-11 Ethernet instrument control protocol
+for controlling VXI11 and LXI compatible instruments.
+
+See also:
+
+- `Python VXI11 home page`_
+- `GitHub repository`_
+
+.. _`Python VXI11 home page`: http://alexforencich.com/wiki/en/python-vxi11/start
+.. _`GitHub repository`: https://github.com/alexforencich/python-vxi11
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-.. automodule:: vxi11
-   :members:
-
-.. autoclass:: vxi11.Instrument
-   :members:
+   intro
+   examples
+   vxi11
+   appendix
 
 Indices and tables
 ==================
