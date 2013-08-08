@@ -11,6 +11,10 @@ https://github.com/alexforencich/python-vxi11
 Python VXI-11 provides a pure Python VXI-11 driver for controlling instruments
 over Ethernet.
 
+## Requirements
+
+* Python 2 or Python 3
+
 ## Installation
 
 Extract and run
