@@ -18,6 +18,7 @@ See also:
 - `Python VXI11 home page`_
 - `GitHub repository`_
 
+.. _LICENSE: appendix.html#license
 .. _`Python VXI11 home page`: http://alexforencich.com/wiki/en/python-vxi11/start
 .. _`GitHub repository`: https://github.com/alexforencich/python-vxi11
 
