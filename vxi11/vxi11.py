@@ -328,6 +328,11 @@ class Instrument(object):
         if self.link is None:
             self.open()
         
+        if self.term_char is not None:
+            flags = OP_FLAG_TERMCHAR_SET
+            term_char = str(self.term_char).encode('utf-8')[0]
+            data += term_char
+        
         flags = 0
         
         num = len(data)
