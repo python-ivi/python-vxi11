@@ -314,7 +314,7 @@ class Instrument(object):
             raise Vxi11Error("error creating link: %d" % error)
         
         self.link = link
-        self.max_recv_size = max_recv_size
+        self.max_recv_size = min(max_recv_size, 1073741824)
         
     def close(self):
         "Close connection"
