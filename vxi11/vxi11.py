@@ -293,8 +293,10 @@ class Instrument(object):
         if host.upper()[:5] == 'TCPIP' and '::' in host:
             # host is a VISA resource string
             res = host.split('::')
+            if len(res) < 3:
+                raise Vxi11Exception("Invalid resource string")
             host = res[1]
-            if len(res) == 4:
+            if len(res) > 3:
                 name = res[2]
         
         self.host = host
