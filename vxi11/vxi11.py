@@ -73,6 +73,7 @@ ERR_DEVICE_LOCKED_BY_ANOTHER_LINK = 11
 ERR_NO_LOCK_HELD_BY_THIS_LINK = 12
 ERR_IO_TIMEOUT = 15
 ERR_IO_ERROR = 17
+ERR_INVALID_ADDRESS = 21
 ERR_ABORT = 23
 ERR_CHANNEL_ALREADY_ESTABLISHED = 29
 
@@ -287,6 +288,15 @@ class CoreClient(rpc.TCPClient):
 class Instrument(object):
     "VXI-11 instrument interface client"
     def __init__(self, host, name = None, client_id = None, term_char = None):
+        "Create new VXI-11 instrument object"
+        
+        if host.upper()[:5] == 'TCPIP' and '::' in host:
+            # host is a VISA resource string
+            res = host.split('::')
+            host = res[1]
+            if len(res) == 4:
+                name = res[2]
+        
         self.host = host
         self.name = name
         self.client_id = client_id
