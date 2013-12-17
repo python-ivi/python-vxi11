@@ -87,7 +87,7 @@ RX_CHR = 2
 RX_END = 4
 
 # Exceptions
-class Vxi11Error(Exception): pass
+class Vxi11Exception(Exception): pass
 
 class Packer(rpc.Packer):
     def pack_device_link(self, link):
@@ -137,7 +137,7 @@ class Packer(rpc.Packer):
         self.pack_int(link)
         self.pack_bool(enable)
         if len(handle) > 40:
-            raise rpc.Vxi11Error("array length too long")
+            raise rpc.Vxi11Exception("array length too long")
         self.pack_opaque(handle)
     
     def pack_device_lock_parms(self, params):
@@ -321,7 +321,7 @@ class Instrument(object):
         error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, self.name.encode("utf-8"))
         
         if error:
-            raise Vxi11Error("error creating link: %d" % error)
+            raise Vxi11Exception("error creating link: %d" % error)
         
         self.link = link
         self.max_recv_size = min(max_recv_size, 1073741824)
@@ -358,9 +358,9 @@ class Instrument(object):
             error, size = self.client.device_write(self.link, self.io_timeout, self.lock_timeout, flags, block)
             
             if error:
-                raise Vxi11Error("error writing data: %d" % error)
+                raise Vxi11Exception("error writing data: %d" % error)
             elif size < len(block):
-                raise Vxi11Error("did not write complete block")
+                raise Vxi11Exception("did not write complete block")
             
             offset += size
             num -= size
@@ -389,7 +389,7 @@ class Instrument(object):
             error, reason, data = self.client.device_read(self.link, read_len, self.io_timeout, self.lock_timeout, flags, term_char)
             
             if error:
-                raise Vxi11Error("error reading data: %d" % error)
+                raise Vxi11Exception("error reading data: %d" % error)
             
             read_data += data
             
@@ -436,7 +436,7 @@ class Instrument(object):
         error, stb = self.client.device_read_stb(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Error("error reading status: %d" % error)
+            raise Vxi11Exception("error reading status: %d" % error)
         
         return stb
     
@@ -450,7 +450,7 @@ class Instrument(object):
         error = self.client.device_trigger(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Error("error triggering: %d" % error)
+            raise Vxi11Exception("error triggering: %d" % error)
     
     def clear(self):
         "Send clear command"
@@ -462,7 +462,7 @@ class Instrument(object):
         error = self.client.device_clear(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Error("error clearing: %d" % error)
+            raise Vxi11Exception("error clearing: %d" % error)
     
     def remote(self):
         "Send remote command"
@@ -474,7 +474,7 @@ class Instrument(object):
         error = self.client.device_remote(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Error("error remote: %d" % error)
+            raise Vxi11Exception("error remote: %d" % error)
     
     def local(self):
         "Send local command"
@@ -486,7 +486,7 @@ class Instrument(object):
         error = self.client.device_local(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Error("error local: %d" % error)
+            raise Vxi11Exception("error local: %d" % error)
     
     def lock(self):
         "Send lock command"
@@ -498,7 +498,7 @@ class Instrument(object):
         error = self.client.device_lock(self.link, flags, self.lock_timeout)
         
         if error:
-            raise Vxi11Error("error locking: %d" % error)
+            raise Vxi11Exception("error locking: %d" % error)
     
     def unlock(self):
         "Send unlock command"
@@ -510,7 +510,7 @@ class Instrument(object):
         error = self.client.device_unlock(self.link)
         
         if error:
-            raise Vxi11Error("error unlocking: %d" % error)
+            raise Vxi11Exception("error unlocking: %d" % error)
 
 
 
