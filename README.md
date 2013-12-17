@@ -30,9 +30,24 @@ Connecting to Agilent MSO7104A via LXI:
     print(instr.ask("*IDN?"))
     # returns 'AGILENT TECHNOLOGIES,MSO7104A,MY********,06.16.0001'
 
-Connecting to Agilent E3649A via HP 2050A GPIB bridge:
+Connecting to Agilent E3649A on GPIB address 5 via HP 2050A GPIB bridge:
 
     import vxi11
     instr = vxi11.Instrument("192.168.1.105", "gpib,5")
     print(instr.ask("*IDN?"))
     # returns 'Agilent Technologies,E3649A,0,1.4-5.0-1.0'
+
+It is also possible to connect with VISA resource strings like so:
+
+    import vxi11
+    instr =  vxi11.Instrument("TCPIP::192.168.1.104::INSTR")
+    print(instr.ask("*IDN?"))
+    # returns 'AGILENT TECHNOLOGIES,MSO7104A,MY********,06.16.0001'
+
+and:
+
+    import vxi11
+    instr = vxi11.Instrument("TCPIP::192.168.1.105::gpib,5::INSTR")
+    print(instr.ask("*IDN?"))
+    # returns 'Agilent Technologies,E3649A,0,1.4-5.0-1.0'
+
