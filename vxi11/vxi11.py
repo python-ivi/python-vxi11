@@ -301,7 +301,7 @@ class Instrument(object):
             # TCPIP0::10.0.0.1::usb0::INSTR
             # TCPIP0::10.0.0.1::usb0[1234::5678::MYSERIAL::0]::INSTR
             
-            m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))?$', host, re.I)
+            m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))$', host, re.I)
             if m is None:
                 raise IOException('Invalid resource string')
             
