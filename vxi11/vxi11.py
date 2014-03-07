@@ -28,6 +28,7 @@ This software is based on pyvxi11 by Michael Walle
 
 from . import rpc
 import random
+import re
 
 # VXI-11 RPC constants
 
@@ -292,12 +293,26 @@ class Instrument(object):
         
         if host.upper()[:5] == 'TCPIP' and '::' in host:
             # host is a VISA resource string
-            res = host.split('::')
-            if len(res) < 3:
-                raise Vxi11Exception("Invalid resource string")
-            host = res[1]
-            if len(res) > 3:
-                name = res[2]
+            # valid resource strings:
+            # TCPIP::10.0.0.1::INSTR
+            # TCPIP0::10.0.0.1::INSTR
+            # TCPIP::10.0.0.1::gpib,5::INSTR
+            # TCPIP0::10.0.0.1::gpib,5::INSTR
+            # TCPIP0::10.0.0.1::usb0::INSTR
+            # TCPIP0::10.0.0.1::usb0[1234::5678::MYSERIAL::0]::INSTR
+            
+            m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))?$', host, re.I)
+            if m is None:
+                raise IOException('Invalid resource string')
+            
+            res_type = m.group('type').upper()
+            res_prefix = m.group('prefix')
+            res_arg1 = m.group('arg1')
+            res_arg2 = m.group('arg2')
+            res_suffix = m.group('suffix')
+
+            host = res_arg1
+            name = res_arg2
         
         self.host = host
         self.name = name
