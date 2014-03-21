@@ -88,7 +88,43 @@ RX_CHR = 2
 RX_END = 4
 
 # Exceptions
-class Vxi11Exception(Exception): pass
+class Vxi11Exception(Exception):
+    em = {0:  "No error",
+          1:  "Syntax error",
+          3:  "Device not accessible",
+          4:  "Invalid link identifier",
+          5:  "Parameter error",
+          6:  "Channel not established",
+          8:  "Operation not supported",
+          9:  "Out of resources",
+          11: "Device locked by another link",
+          12: "No lock held by this link",
+          15: "IO timeout",
+          17: "IO error",
+          21: "Invalid address",
+          23: "Abort",
+          29: "Channel already established"}
+    
+    def __init__(self, err = None, note = None):
+        self.err = err
+        self.note = note
+        self.msg = ''
+        
+        if err is None:
+            self.msg = note
+        else:
+            if type(err) is int:
+                if err in self.em:
+                    self.msg = "%d: %s" % (err, self.em[err])
+                else:
+                    self.msg = "%d: Unknown error" % err
+            else:
+                self.msg = err
+            if note is not None:
+                self.msg = "%s [%s]" % (self.msg, note)
+    
+    def __str__(self):
+        return self.msg
 
 class Packer(rpc.Packer):
     def pack_device_link(self, link):
@@ -303,7 +339,7 @@ class Instrument(object):
             
             m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))$', host, re.I)
             if m is None:
-                raise IOException('Invalid resource string')
+                raise Vxi11Exception('Invalid resource string', 'init')
             
             res_type = m.group('type').upper()
             res_prefix = m.group('prefix')
@@ -338,7 +374,7 @@ class Instrument(object):
         error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, self.name.encode("utf-8"))
         
         if error:
-            raise Vxi11Exception("error creating link: %d" % error)
+            raise Vxi11Exception(error, 'open')
         
         self.link = link
         self.max_recv_size = min(max_recv_size, 1073741824)
@@ -375,9 +411,9 @@ class Instrument(object):
             error, size = self.client.device_write(self.link, self.io_timeout, self.lock_timeout, flags, block)
             
             if error:
-                raise Vxi11Exception("error writing data: %d" % error)
+                raise Vxi11Exception(error, 'write')
             elif size < len(block):
-                raise Vxi11Exception("did not write complete block")
+                raise Vxi11Exception("did not write complete block", 'write')
             
             offset += size
             num -= size
@@ -406,7 +442,7 @@ class Instrument(object):
             error, reason, data = self.client.device_read(self.link, read_len, self.io_timeout, self.lock_timeout, flags, term_char)
             
             if error:
-                raise Vxi11Exception("error reading data: %d" % error)
+                raise Vxi11Exception(error, 'read')
             
             read_data += data
             
@@ -460,7 +496,7 @@ class Instrument(object):
         error, stb = self.client.device_read_stb(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Exception("error reading status: %d" % error)
+            raise Vxi11Exception(error, 'read_stb')
         
         return stb
     
@@ -474,7 +510,7 @@ class Instrument(object):
         error = self.client.device_trigger(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Exception("error triggering: %d" % error)
+            raise Vxi11Exception(error, 'trigger')
     
     def clear(self):
         "Send clear command"
@@ -486,7 +522,7 @@ class Instrument(object):
         error = self.client.device_clear(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Exception("error clearing: %d" % error)
+            raise Vxi11Exception(error, 'clear')
     
     def remote(self):
         "Send remote command"
@@ -498,7 +534,7 @@ class Instrument(object):
         error = self.client.device_remote(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Exception("error remote: %d" % error)
+            raise Vxi11Exception(error, 'remote')
     
     def local(self):
         "Send local command"
@@ -510,7 +546,7 @@ class Instrument(object):
         error = self.client.device_local(self.link, flags, self.lock_timeout, self.io_timeout)
         
         if error:
-            raise Vxi11Exception("error local: %d" % error)
+            raise Vxi11Exception(error, 'local')
     
     def lock(self):
         "Send lock command"
@@ -522,7 +558,7 @@ class Instrument(object):
         error = self.client.device_lock(self.link, flags, self.lock_timeout)
         
         if error:
-            raise Vxi11Exception("error locking: %d" % error)
+            raise Vxi11Exception(error, 'lock')
     
     def unlock(self):
         "Send unlock command"
@@ -534,7 +570,7 @@ class Instrument(object):
         error = self.client.device_unlock(self.link)
         
         if error:
-            raise Vxi11Exception("error unlocking: %d" % error)
+            raise Vxi11Exception(error, 'unlock')
 
 
 
