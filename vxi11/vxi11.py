@@ -174,7 +174,7 @@ class Packer(rpc.Packer):
         self.pack_int(link)
         self.pack_bool(enable)
         if len(handle) > 40:
-            raise rpc.Vxi11Exception("array length too long")
+            raise Vxi11Exception("array length too long")
         self.pack_opaque(handle)
     
     def pack_device_lock_parms(self, params):
