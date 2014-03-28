@@ -138,28 +138,28 @@ class Packer(rpc.Packer):
         self.pack_string(device)
     
     def pack_device_write_parms(self, params):
-        link, io_timeout, lock_timeout, flags, data = params
+        link, timeout, lock_timeout, flags, data = params
         self.pack_int(link)
-        self.pack_uint(io_timeout)
+        self.pack_uint(timeout)
         self.pack_uint(lock_timeout)
         self.pack_int(flags)
         self.pack_opaque(data)
     
     def pack_device_read_parms(self, params):
-        link, request_size, io_timeout, lock_timeout, flags, term_char = params
+        link, request_size, timeout, lock_timeout, flags, term_char = params
         self.pack_int(link)
         self.pack_uint(request_size)
-        self.pack_uint(io_timeout)
+        self.pack_uint(timeout)
         self.pack_uint(lock_timeout)
         self.pack_int(flags)
         self.pack_int(term_char)
     
     def pack_device_generic_parms(self, params):
-        link, flags, lock_timeout, io_timeout = params
+        link, flags, lock_timeout, timeout = params
         self.pack_int(link)
         self.pack_int(flags)
         self.pack_uint(lock_timeout)
-        self.pack_uint(io_timeout)
+        self.pack_uint(timeout)
     
     def pack_device_remote_func_parms(self, params):
         host_addr, host_port, prog_num, prog_vers, prog_family = params
@@ -184,10 +184,10 @@ class Packer(rpc.Packer):
         self.pack_uint(lock_timeout)
     
     def pack_device_docmd_parms(self, params):
-        link, flags, io_timeout, lock_timeout, cmd, network_order, datasize, data_in = params
+        link, flags, timeout, lock_timeout, cmd, network_order, datasize, data_in = params
         self.pack_int(link)
         self.pack_int(flags)
-        self.pack_uint(io_timeout)
+        self.pack_uint(timeout)
         self.pack_uint(lock_timeout)
         self.pack_int(cmd)
         self.pack_bool(network_order)
@@ -241,44 +241,44 @@ class CoreClient(rpc.TCPClient):
                 self.packer.pack_create_link_parms,
                 self.unpacker.unpack_create_link_resp)
 
-    def device_write(self, link, io_timeout, lock_timeout, flags, data):
-        params = (link, io_timeout, lock_timeout, flags, data)
+    def device_write(self, link, timeout, lock_timeout, flags, data):
+        params = (link, timeout, lock_timeout, flags, data)
         return self.make_call(DEVICE_WRITE, params,
                 self.packer.pack_device_write_parms,
                 self.unpacker.unpack_device_write_resp)
 
-    def device_read(self, link, request_size, io_timeout, lock_timeout, flags, term_char):
-        params = (link, request_size, io_timeout, lock_timeout, flags, term_char)
+    def device_read(self, link, request_size, timeout, lock_timeout, flags, term_char):
+        params = (link, request_size, timeout, lock_timeout, flags, term_char)
         return self.make_call(DEVICE_READ, params,
                 self.packer.pack_device_read_parms,
                 self.unpacker.unpack_device_read_resp)
 
-    def device_read_stb(self, link, flags, lock_timeout, io_timeout):
-        params = (link, flags, lock_timeout, io_timeout)
+    def device_read_stb(self, link, flags, lock_timeout, timeout):
+        params = (link, flags, lock_timeout, timeout)
         return self.make_call(DEVICE_READSTB, params,
                 self.packer.pack_device_generic_parms,
                 self.unpacker.unpack_device_read_stb_resp)
 
-    def device_trigger(self, link, flags, lock_timeout, io_timeout):
-        params = (link, flags, lock_timeout, io_timeout)
+    def device_trigger(self, link, flags, lock_timeout, timeout):
+        params = (link, flags, lock_timeout, timeout)
         return self.make_call(DEVICE_TRIGGER, params,
                 self.packer.pack_device_generic_parms,
                 self.unpacker.unpack_device_error)
 
-    def device_clear(self, link, flags, lock_timeout, io_timeout):
-        params = (link, flags, lock_timeout, io_timeout)
+    def device_clear(self, link, flags, lock_timeout, timeout):
+        params = (link, flags, lock_timeout, timeout)
         return self.make_call(DEVICE_CLEAR, params,
                 self.packer.pack_device_generic_parms,
                 self.unpacker.unpack_device_error)
 
-    def device_remote(self, link, flags, lock_timeout, io_timeout):
-        params = (link, flags, lock_timeout, io_timeout)
+    def device_remote(self, link, flags, lock_timeout, timeout):
+        params = (link, flags, lock_timeout, timeout)
         return self.make_call(DEVICE_REMOTE, params,
                 self.packer.pack_device_generic_parms,
                 self.unpacker.unpack_device_error)
 
-    def device_local(self, link, flags, lock_timeout, io_timeout):
-        params = (link, flags, lock_timeout, io_timeout)
+    def device_local(self, link, flags, lock_timeout, timeout):
+        params = (link, flags, lock_timeout, timeout)
         return self.make_call(DEVICE_LOCAL, params,
                 self.packer.pack_device_generic_parms,
                 self.unpacker.unpack_device_error)
@@ -300,8 +300,8 @@ class CoreClient(rpc.TCPClient):
                 self.packer.pack_device_enable_srq_parms,
                 self.unpacker.unpack_device_error)
 
-    def device_docmd(self, link, flags, io_timeout, lock_timeout, cmd, network_order, datasize, data_in):
-        params = (link, flags, io_timeout, lock_timeout, cmd, network_order, datasize, data_in)
+    def device_docmd(self, link, flags, timeout, lock_timeout, cmd, network_order, datasize, data_in):
+        params = (link, flags, timeout, lock_timeout, cmd, network_order, datasize, data_in)
         return self.make_call(DEVICE_DOCMD, params,
                 self.packer.pack_device_docmd_parms,
                 self.unpacker.unpack_device_docmd_resp)
@@ -355,7 +355,7 @@ class Instrument(object):
         self.client_id = client_id
         self.term_char = term_char
         self.lock_timeout = 10000
-        self.io_timeout = 10000
+        self.timeout = 10000
         self.client = CoreClient(host)
         self.link = None
         self.max_recv_size = 0
@@ -408,7 +408,7 @@ class Instrument(object):
             
             block = data[offset:offset+self.max_recv_size]
             
-            error, size = self.client.device_write(self.link, self.io_timeout, self.lock_timeout, flags, block)
+            error, size = self.client.device_write(self.link, self.timeout, self.lock_timeout, flags, block)
             
             if error:
                 raise Vxi11Exception(error, 'write')
@@ -439,7 +439,7 @@ class Instrument(object):
         read_data = b''
         
         while reason & (RX_END | RX_CHR) == 0:
-            error, reason, data = self.client.device_read(self.link, read_len, self.io_timeout, self.lock_timeout, flags, term_char)
+            error, reason, data = self.client.device_read(self.link, read_len, self.timeout, self.lock_timeout, flags, term_char)
             
             if error:
                 raise Vxi11Exception(error, 'read')
@@ -493,7 +493,7 @@ class Instrument(object):
         
         flags = 0
         
-        error, stb = self.client.device_read_stb(self.link, flags, self.lock_timeout, self.io_timeout)
+        error, stb = self.client.device_read_stb(self.link, flags, self.lock_timeout, self.timeout)
         
         if error:
             raise Vxi11Exception(error, 'read_stb')
@@ -507,7 +507,7 @@ class Instrument(object):
         
         flags = 0
         
-        error = self.client.device_trigger(self.link, flags, self.lock_timeout, self.io_timeout)
+        error = self.client.device_trigger(self.link, flags, self.lock_timeout, self.timeout)
         
         if error:
             raise Vxi11Exception(error, 'trigger')
@@ -519,7 +519,7 @@ class Instrument(object):
         
         flags = 0
         
-        error = self.client.device_clear(self.link, flags, self.lock_timeout, self.io_timeout)
+        error = self.client.device_clear(self.link, flags, self.lock_timeout, self.timeout)
         
         if error:
             raise Vxi11Exception(error, 'clear')
@@ -531,7 +531,7 @@ class Instrument(object):
         
         flags = 0
         
-        error = self.client.device_remote(self.link, flags, self.lock_timeout, self.io_timeout)
+        error = self.client.device_remote(self.link, flags, self.lock_timeout, self.timeout)
         
         if error:
             raise Vxi11Exception(error, 'remote')
@@ -543,7 +543,7 @@ class Instrument(object):
         
         flags = 0
         
-        error = self.client.device_local(self.link, flags, self.lock_timeout, self.io_timeout)
+        error = self.client.device_local(self.link, flags, self.lock_timeout, self.timeout)
         
         if error:
             raise Vxi11Exception(error, 'local')
