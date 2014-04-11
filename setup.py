@@ -33,6 +33,11 @@ instrument control protocol for controlling VXI11 and LXI compatible instruments
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3'
         ],
-    packages = ['vxi11']
+    packages = ['vxi11'],
+    entry_points = {
+        'console_scripts': [
+            'vxi11-cli = vxi11.cli:main',
+        ],
+    },
 )
 
