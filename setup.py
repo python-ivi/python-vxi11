@@ -1,4 +1,5 @@
 
+from __future__ import with_statement
 
 # http://docs.python.org/distutils/
 # http://packages.python.org/distribute/
@@ -7,10 +8,18 @@ try:
 except:
     from distutils.core import setup
 
+import os.path
+
+version_py = os.path.join(os.path.dirname(__file__), 'vxi11', 'version.py')
+with open(version_py, 'r') as f:
+    d = dict()
+    exec(f.read(), d)
+    version = d['__version__']
+
 setup(
     name = 'python-vxi11',
     description = 'Python VXI-11 driver for controlling instruments over Ethernet',
-    version = '0.5',
+    version = version,
     long_description = '''This Python package supports the VXI-11 Ethernet
 instrument control protocol for controlling VXI11 and LXI compatible instruments.''',
     author = 'Alex Forencich',
