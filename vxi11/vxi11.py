@@ -104,12 +104,12 @@ class Vxi11Exception(Exception):
           21: "Invalid address",
           23: "Abort",
           29: "Channel already established"}
-    
+
     def __init__(self, err = None, note = None):
         self.err = err
         self.note = note
         self.msg = ''
-        
+
         if err is None:
             self.msg = note
         else:
@@ -122,21 +122,21 @@ class Vxi11Exception(Exception):
                 self.msg = err
             if note is not None:
                 self.msg = "%s [%s]" % (self.msg, note)
-    
+
     def __str__(self):
         return self.msg
 
 class Packer(rpc.Packer):
     def pack_device_link(self, link):
         self.pack_int(link)
-    
+
     def pack_create_link_parms(self, params):
         id, lock_device, lock_timeout, device = params
         self.pack_int(id)
         self.pack_bool(lock_device)
         self.pack_uint(lock_timeout)
         self.pack_string(device)
-    
+
     def pack_device_write_parms(self, params):
         link, timeout, lock_timeout, flags, data = params
         self.pack_int(link)
@@ -144,7 +144,7 @@ class Packer(rpc.Packer):
         self.pack_uint(lock_timeout)
         self.pack_int(flags)
         self.pack_opaque(data)
-    
+
     def pack_device_read_parms(self, params):
         link, request_size, timeout, lock_timeout, flags, term_char = params
         self.pack_int(link)
@@ -153,14 +153,14 @@ class Packer(rpc.Packer):
         self.pack_uint(lock_timeout)
         self.pack_int(flags)
         self.pack_int(term_char)
-    
+
     def pack_device_generic_parms(self, params):
         link, flags, lock_timeout, timeout = params
         self.pack_int(link)
         self.pack_int(flags)
         self.pack_uint(lock_timeout)
         self.pack_uint(timeout)
-    
+
     def pack_device_remote_func_parms(self, params):
         host_addr, host_port, prog_num, prog_vers, prog_family = params
         self.pack_uint(host_addr)
@@ -168,7 +168,7 @@ class Packer(rpc.Packer):
         self.pack_uint(prog_num)
         self.pack_uint(prog_vers)
         self.pack_int(prog_family)
-    
+
     def pack_device_enable_srq_parms(self, params):
         link, enable, handle = params
         self.pack_int(link)
@@ -176,13 +176,13 @@ class Packer(rpc.Packer):
         if len(handle) > 40:
             raise Vxi11Exception("array length too long")
         self.pack_opaque(handle)
-    
+
     def pack_device_lock_parms(self, params):
         link, flags, lock_timeout = params
         self.pack_int(link)
         self.pack_int(flags)
         self.pack_uint(lock_timeout)
-    
+
     def pack_device_docmd_parms(self, params):
         link, flags, timeout, lock_timeout, cmd, network_order, datasize, data_in = params
         self.pack_int(link)
@@ -197,33 +197,33 @@ class Packer(rpc.Packer):
 class Unpacker(rpc.Unpacker):
     def unpack_device_link(self):
         return self.unpack_int()
-    
+
     def unpack_device_error(self):
         return self.unpack_int()
-    
+
     def unpack_create_link_resp(self):
         error = self.unpack_int()
         link = self.unpack_int()
         abort_port = self.unpack_uint()
         max_recv_size = self.unpack_uint()
         return error, link, abort_port, max_recv_size
-    
+
     def unpack_device_write_resp(self):
         error = self.unpack_int()
         size = self.unpack_uint()
         return error, size
-    
+
     def unpack_device_read_resp(self):
         error = self.unpack_int()
         reason = self.unpack_int()
         data = self.unpack_opaque()
         return error, reason, data
-    
+
     def unpack_device_read_stb_resp(self):
         error = self.unpack_int()
         stb = self.unpack_uint()
         return error, stb
-    
+
     def unpack_device_docmd_resp(self):
         error = self.unpack_int()
         data_out = self.unpack_opaque()
@@ -310,13 +310,13 @@ class CoreClient(rpc.TCPClient):
         return self.make_call(DESTROY_LINK, link,
                 self.packer.pack_device_link,
                 self.unpacker.unpack_device_error)
-    
+
     def create_intr_chan(self, host_addr, host_port, prog_num, prog_vers, prog_family):
         params = (host_addr, host_port, prog_num, prog_vers, prog_family)
         return self.make_call(CREATE_INTR_CHAN, params,
                 self.packer.pack_device_docmd_parms,
                 self.unpacker.unpack_device_error)
-    
+
     def destroy_intr_chan(self):
         return self.make_call(DESTROY_INTR_CHAN, None,
                 None,
@@ -326,7 +326,7 @@ class Instrument(object):
     "VXI-11 instrument interface client"
     def __init__(self, host, name = None, client_id = None, term_char = None):
         "Create new VXI-11 instrument object"
-        
+
         if host.upper()[:5] == 'TCPIP' and '::' in host:
             # host is a VISA resource string
             # valid resource strings:
@@ -336,11 +336,11 @@ class Instrument(object):
             # TCPIP0::10.0.0.1::gpib,5::INSTR
             # TCPIP0::10.0.0.1::usb0::INSTR
             # TCPIP0::10.0.0.1::usb0[1234::5678::MYSERIAL::0]::INSTR
-            
+
             m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))$', host, re.I)
             if m is None:
                 raise Vxi11Exception('Invalid resource string', 'init')
-            
+
             res_type = m.group('type').upper()
             res_prefix = m.group('prefix')
             res_arg1 = m.group('arg1')
@@ -349,7 +349,7 @@ class Instrument(object):
 
             host = res_arg1
             name = res_arg2
-        
+
         self.host = host
         self.name = name
         self.client_id = client_id
@@ -359,26 +359,26 @@ class Instrument(object):
         self.client = CoreClient(host)
         self.link = None
         self.max_recv_size = 0
-        
+
         if self.name is None:
             self.name = "inst0"
-        
+
         if self.client_id is None:
             self.client_id = random.getrandbits(31)
-    
+
     def open(self):
         "Open connection to VXI-11 instrument"
         if self.client is None:
             self.client = CoreClient(self.host)
-        
+
         error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, self.name.encode("utf-8"))
-        
+
         if error:
             raise Vxi11Exception(error, 'open')
-        
+
         self.link = link
         self.max_recv_size = min(max_recv_size, 1073741824)
-        
+
     def close(self):
         "Close connection"
         self.client.destroy_link(self.link)
@@ -390,31 +390,31 @@ class Instrument(object):
         "Write binary data to instrument"
         if self.link is None:
             self.open()
-        
+
         if self.term_char is not None:
             flags = OP_FLAG_TERMCHAR_SET
             term_char = str(self.term_char).encode('utf-8')[0]
             data += term_char
-        
+
         flags = 0
-        
+
         num = len(data)
-        
+
         offset = 0
-        
+
         while num > 0:
             if num <= self.max_recv_size:
                 flags |= OP_FLAG_END
-            
+
             block = data[offset:offset+self.max_recv_size]
-            
+
             error, size = self.client.device_write(self.link, self.timeout, self.lock_timeout, flags, block)
-            
+
             if error:
                 raise Vxi11Exception(error, 'write')
             elif size < len(block):
                 raise Vxi11Exception("did not write complete block", 'write')
-            
+
             offset += size
             num -= size
 
@@ -422,44 +422,44 @@ class Instrument(object):
         "Read binary data from instrument"
         if self.link is None:
             self.open()
-        
+
         read_len = self.max_recv_size
         if num > 0 and num < self.max_recv_size:
             read_len = num
-        
+
         flags = 0
         reason = 0
-        
+
         term_char = 0
-        
+
         if self.term_char is not None:
             flags = OP_FLAG_TERMCHAR_SET
             term_char = str(self.term_char).encode('utf-8')[0]
-        
+
         read_data = b''
-        
+
         while reason & (RX_END | RX_CHR) == 0:
             error, reason, data = self.client.device_read(self.link, read_len, self.timeout, self.lock_timeout, flags, term_char)
-            
+
             if error:
                 raise Vxi11Exception(error, 'read')
-            
+
             read_data += data
-            
+
             if num > 0:
                 num = num - len(data)
                 if num <= 0:
                     break
                 if num < read_len:
                     read_len = num
-            
+
         return read_data
-    
+
     def ask_raw(self, data, num=-1):
         "Write then read binary data"
         self.write_raw(data)
         return self.read_raw(num)
-    
+
     def write(self, message, encoding = 'utf-8'):
         "Write string to instrument"
         if type(message) is tuple or type(message) is list:
@@ -467,7 +467,7 @@ class Instrument(object):
             for message_i in message:
                 self.write(message_i, encoding)
             return
-        
+
         self.write_raw(str(message).encode(encoding))
 
     def read(self, num=-1, encoding = 'utf-8'):
@@ -482,93 +482,93 @@ class Instrument(object):
             for message_i in message:
                 val.append(self.ask(message_i, num, encoding))
             return val
-        
+
         self.write(message, encoding)
         return self.read(num, encoding)
-    
+
     def read_stb(self):
         "Read status byte"
         if self.link is None:
             self.open()
-        
+
         flags = 0
-        
+
         error, stb = self.client.device_read_stb(self.link, flags, self.lock_timeout, self.timeout)
-        
+
         if error:
             raise Vxi11Exception(error, 'read_stb')
-        
+
         return stb
-    
+
     def trigger(self):
         "Send trigger command"
         if self.link is None:
             self.open()
-        
+
         flags = 0
-        
+
         error = self.client.device_trigger(self.link, flags, self.lock_timeout, self.timeout)
-        
+
         if error:
             raise Vxi11Exception(error, 'trigger')
-    
+
     def clear(self):
         "Send clear command"
         if self.link is None:
             self.open()
-        
+
         flags = 0
-        
+
         error = self.client.device_clear(self.link, flags, self.lock_timeout, self.timeout)
-        
+
         if error:
             raise Vxi11Exception(error, 'clear')
-    
+
     def remote(self):
         "Send remote command"
         if self.link is None:
             self.open()
-        
+
         flags = 0
-        
+
         error = self.client.device_remote(self.link, flags, self.lock_timeout, self.timeout)
-        
+
         if error:
             raise Vxi11Exception(error, 'remote')
-    
+
     def local(self):
         "Send local command"
         if self.link is None:
             self.open()
-        
+
         flags = 0
-        
+
         error = self.client.device_local(self.link, flags, self.lock_timeout, self.timeout)
-        
+
         if error:
             raise Vxi11Exception(error, 'local')
-    
+
     def lock(self):
         "Send lock command"
         if self.link is None:
             self.open()
-        
+
         flags = 0
-        
+
         error = self.client.device_lock(self.link, flags, self.lock_timeout)
-        
+
         if error:
             raise Vxi11Exception(error, 'lock')
-    
+
     def unlock(self):
         "Send unlock command"
         if self.link is None:
             self.open()
-        
+
         flags = 0
-        
+
         error = self.client.device_unlock(self.link)
-        
+
         if error:
             raise Vxi11Exception(error, 'unlock')
 
