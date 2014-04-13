@@ -26,6 +26,6 @@ Open a connection and set the timeout::
 
     >>> import vxi11
     >>> instr = vxi11.Instrument("192.168.1.104")
-    >>> instr.io_timeout = 60*1000
+    >>> instr.timeout = 60*1000
     >>> print(instr.ask("*TST?"))
     '0'
