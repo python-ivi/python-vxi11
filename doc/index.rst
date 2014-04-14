@@ -12,7 +12,7 @@ See also:
 - `GitHub repository`_
 
 .. _`Python VXI11 home page`: http://alexforencich.com/wiki/en/python-vxi11/start
-.. _`GitHub repository`: https://github.com/alexforencich/python-vxi11
+.. _`GitHub repository`: https://github.com/python-ivi/python-vxi11
 
 Contents:
 

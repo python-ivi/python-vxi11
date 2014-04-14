@@ -4,7 +4,10 @@ For more information and updates:
 http://alexforencich.com/wiki/en/python-vxi11/start
 
 GitHub repository:
-https://github.com/alexforencich/python-vxi11
+https://github.com/python-ivi/python-vxi11
+
+Google group:
+https://groups.google.com/d/forum/python-ivi
 
 ## Introduction
 

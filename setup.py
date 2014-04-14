@@ -16,7 +16,7 @@ instrument control protocol for controlling VXI11 and LXI compatible instruments
     author = 'Alex Forencich',
     author_email = 'alex@alexforencich.com',
     url = 'http://alexforencich.com/wiki/en/python-vxi11/start',
-    download_url = 'http://github.com/alexforencich/python-vxi11/tarball/master',
+    download_url = 'http://github.com/python-ivi/python-vxi11/tarball/master',
     keywords = 'VXI LXI measurement instrument',
     license = 'MIT License',
     classifiers=[
