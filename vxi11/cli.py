@@ -91,7 +91,7 @@ def main():
     v = Instrument(host, name)
     v.open()
 
-    print("Enter command to send. Quit with 'q'.")
+    print("Enter command to send. Quit with 'q'. Read with '?'.")
     try:
         while True:
             cmd = input('=> ')
@@ -104,7 +104,9 @@ def main():
                 is_query = cmd.split(' ')[0][-1] == '?'
                 try:
                     if is_query:
-                        print(v.ask(cmd))
+                        if len(cmd) > 1:
+                            v.write(cmd)
+                        print(v.read())
                     else:
                         v.write(cmd)
                     if options.check_esr:
