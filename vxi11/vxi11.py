@@ -87,6 +87,27 @@ RX_REQCNT = 1
 RX_CHR = 2
 RX_END = 4
 
+def parse_visa_resource_string(resource_string):
+    # valid resource strings:
+    # TCPIP::10.0.0.1::INSTR
+    # TCPIP0::10.0.0.1::INSTR
+    # TCPIP::10.0.0.1::gpib,5::INSTR
+    # TCPIP0::10.0.0.1::gpib,5::INSTR
+    # TCPIP0::10.0.0.1::usb0::INSTR
+    # TCPIP0::10.0.0.1::usb0[1234::5678::MYSERIAL::0]::INSTR
+    m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))'
+            '?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))$',
+            resource_string, re.I)
+
+    if m is not None:
+        return dict(
+                type = m.group('type').upper(),
+                prefix = m.group('prefix'),
+                arg1 = m.group('arg1'),
+                arg2 = m.group('arg2'),
+                suffix = m.group('suffix'),
+        )
+
 # Exceptions
 class Vxi11Exception(Exception):
     em = {0:  "No error",
@@ -327,28 +348,14 @@ class Instrument(object):
     def __init__(self, host, name = None, client_id = None, term_char = None):
         "Create new VXI-11 instrument object"
 
-        if host.upper()[:5] == 'TCPIP' and '::' in host:
-            # host is a VISA resource string
-            # valid resource strings:
-            # TCPIP::10.0.0.1::INSTR
-            # TCPIP0::10.0.0.1::INSTR
-            # TCPIP::10.0.0.1::gpib,5::INSTR
-            # TCPIP0::10.0.0.1::gpib,5::INSTR
-            # TCPIP0::10.0.0.1::usb0::INSTR
-            # TCPIP0::10.0.0.1::usb0[1234::5678::MYSERIAL::0]::INSTR
+        if host.startswith('TCPIP') and '::' in host:
+            res = parse_visa_resource_string(host)
 
-            m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))$', host, re.I)
-            if m is None:
+            if res is None:
                 raise Vxi11Exception('Invalid resource string', 'init')
 
-            res_type = m.group('type').upper()
-            res_prefix = m.group('prefix')
-            res_arg1 = m.group('arg1')
-            res_arg2 = m.group('arg2')
-            res_suffix = m.group('suffix')
-
-            host = res_arg1
-            name = res_arg2
+            host = res['arg1']
+            name = res['arg2']
 
         self.host = host
         self.name = name
