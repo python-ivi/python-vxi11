@@ -55,7 +55,7 @@ def process_local_command(cmd):
         print('Unknown command "%s"' % cmd)
 
 def main():
-    usage = 'usage: %prog [options] <host>'
+    usage = 'usage: %prog [options] <host> [<name>]'
     parser = OptionParser(usage=usage)
     parser.add_option('-d', action='store_true', dest='debug',
             help='enable debug messages')
@@ -84,8 +84,11 @@ def main():
         sys.exit(1)
 
     host = args[0]
+    name = None
+    if len(args) > 1:
+        name = args[1]
 
-    v = Instrument(host)
+    v = Instrument(host, name)
     v.open()
 
     print("Enter command to send. Quit with 'q'.")
