@@ -36,6 +36,9 @@ from optparse import OptionParser
 from . import __version__
 from .vxi11 import Instrument, Vxi11Exception
 
+try: input = raw_input
+except NameError: pass
+
 LOCAL_COMMANDS = {
         '%SLEEP': (1, 1, lambda a: time.sleep(float(a[0])/1000)),
 }
@@ -47,9 +50,9 @@ def process_local_command(cmd):
         if cmd_info[0] <= len(args[1:]) <= cmd_info[1]:
             cmd_info[2](args[1:])
         else:
-            print 'Invalid number of arguments for command %s' % args[0]
+            print('Invalid number of arguments for command %s' % args[0])
     else:
-        print 'Unknown command "%s"' % cmd
+        print('Unknown command "%s"' % cmd)
 
 def main():
     usage = 'usage: %prog [options] <host>'
@@ -67,7 +70,7 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.version:
-        print 'vxi11-cli v%s' % (__version__,)
+        print('vxi11-cli v%s' % (__version__,))
         sys.exit(0)
 
     logging.basicConfig()
@@ -77,7 +80,7 @@ def main():
         logging.getLogger('vxi11').setLevel(logging.DEBUG)
 
     if len(args) < 1:
-        print parser.format_help()
+        print(parser.format_help())
         sys.exit(1)
 
     host = args[0]
@@ -85,10 +88,10 @@ def main():
     v = Instrument(host)
     v.open()
 
-    print "Enter command to send. Quit with 'q'."
+    print("Enter command to send. Quit with 'q'.")
     try:
         while True:
-            cmd = raw_input('=> ')
+            cmd = input('=> ')
             if cmd == 'q':
                 break
             if cmd.startswith('%'):
@@ -98,17 +101,18 @@ def main():
                 is_query = cmd.split(' ')[0][-1] == '?'
                 try:
                     if is_query:
-                        print v.ask(cmd)
+                        print(v.ask(cmd))
                     else:
                         v.write(cmd)
                     if options.check_esr:
                         esr = int(v.ask('*ESR?').strip())
                         if esr != 0:
-                            print 'Warning: ESR was %d' % esr
-                except Vxi11Exception, e:
-                    print 'ERROR: %s' % e
+                            print('Warning: ESR was %d' % esr)
+                except Vxi11Exception:
+                    e = sys.exc_info()[1]
+                    print('ERROR: %s' % e)
     except EOFError:
-        print 'exitting..'
+        print('exiting...')
 
     v.close()
 
