@@ -254,14 +254,14 @@ class RawTCPClient(Client):
     def __init__(self, host, prog, vers, port):
         Client.__init__(self, host, prog, vers, port)
         self.connect()
-    
+
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.host, self.port))
-        
+
     def close(self):
         self.sock.close()
-    
+
     def do_call(self):
         call = self.packer.get_buf()
         sendrecord(self.sock, call)
@@ -280,11 +280,11 @@ class RawUDPClient(Client):
     def __init__(self, host, prog, vers, port):
         Client.__init__(self, host, prog, vers, port)
         self.connect()
-    
+
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.connect((self.host, self.port))
-        
+
     def close(self):
         self.sock.close()
 
@@ -328,7 +328,7 @@ class RawBroadcastUDPClient(RawUDPClient):
         RawUDPClient.__init__(self, bcastaddr, prog, vers, port)
         self.reply_handler = None
         self.timeout = 30
-    
+
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -666,7 +666,7 @@ class TCPServer(Server):
     def __init__(self, host, prog, vers, port):
         Server.__init__(self, host, prog, vers, port)
         self.connect()
-    
+
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.prot = IPPROTO_TCP
@@ -725,12 +725,12 @@ class UDPServer(Server):
     def __init__(self, host, prog, vers, port):
         Server.__init__(self, host, prog, vers, port)
         self.connect()
-    
+
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.prot = IPPROTO_UDP
         self.sock.bind((self.host, self.port))
-    
+
     def loop(self):
         while 1:
             self.session()
