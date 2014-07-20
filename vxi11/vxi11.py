@@ -94,7 +94,7 @@ def parse_visa_resource_string(resource_string):
     # TCPIP0::10.0.0.1::usb0::INSTR
     # TCPIP0::10.0.0.1::usb0[1234::5678::MYSERIAL::0]::INSTR
     m = re.match('^(?P<prefix>(?P<type>TCPIP)\d*)(::(?P<arg1>[^\s:]+))'
-            '?(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))$',
+            '(::(?P<arg2>[^\s:]+(\[.+\])?))?(::(?P<suffix>INSTR))$',
             resource_string, re.I)
 
     if m is not None:
@@ -346,7 +346,7 @@ class Instrument(object):
     def __init__(self, host, name = None, client_id = None, term_char = None):
         "Create new VXI-11 instrument object"
 
-        if host.startswith('TCPIP') and '::' in host:
+        if host.upper().startswith('TCPIP') and '::' in host:
             res = parse_visa_resource_string(host)
 
             if res is None:
