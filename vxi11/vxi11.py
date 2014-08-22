@@ -248,6 +248,10 @@ class Unpacker(rpc.Unpacker):
         data_out = self.unpack_opaque()
         return error, data_out
 
+    def done(self):
+        # ignore any trailing bytes
+        pass
+
 class CoreClient(rpc.TCPClient):
     def __init__(self, host):
         self.packer = Packer()
