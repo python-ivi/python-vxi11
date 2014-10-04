@@ -511,10 +511,11 @@ class BroadcastUDPPortMapperClient(PartialPortMapperClient, RawBroadcastUDPClien
 
 class TCPClient(RawTCPClient):
 
-    def __init__(self, host, prog, vers):
-        pmap = TCPPortMapperClient(host)
-        port = pmap.get_port((prog, vers, IPPROTO_TCP, 0))
-        pmap.close()
+    def __init__(self, host, prog, vers, port=0):
+        if port == 0:
+            pmap = TCPPortMapperClient(host)
+            port = pmap.get_port((prog, vers, IPPROTO_TCP, 0))
+            pmap.close()
         if port == 0:
             raise RPCError('program not registered')
         RawTCPClient.__init__(self, host, prog, vers, port)
@@ -522,10 +523,11 @@ class TCPClient(RawTCPClient):
 
 class UDPClient(RawUDPClient):
 
-    def __init__(self, host, prog, vers):
-        pmap = UDPPortMapperClient(host)
-        port = pmap.get_port((prog, vers, IPPROTO_UDP, 0))
-        pmap.close()
+    def __init__(self, host, prog, vers, port=0):
+        if port == 0:
+            pmap = UDPPortMapperClient(host)
+            port = pmap.get_port((prog, vers, IPPROTO_UDP, 0))
+            pmap.close()
         if port == 0:
             raise RPCError('program not registered')
         RawUDPClient.__init__(self, host, prog, vers, port)

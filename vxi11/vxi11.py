@@ -252,11 +252,12 @@ class Unpacker(rpc.Unpacker):
         # ignore any trailing bytes
         pass
 
+
 class CoreClient(rpc.TCPClient):
-    def __init__(self, host):
+    def __init__(self, host, port=0):
         self.packer = Packer()
         self.unpacker = Unpacker('')
-        rpc.TCPClient.__init__(self, host, DEVICE_CORE_PROG, DEVICE_CORE_VERS)
+        rpc.TCPClient.__init__(self, host, DEVICE_CORE_PROG, DEVICE_CORE_VERS, port)
 
     def create_link(self, id, lock_device, lock_timeout, name):
         params = (id, lock_device, lock_timeout, name)
