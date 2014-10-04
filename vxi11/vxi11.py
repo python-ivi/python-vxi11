@@ -359,13 +359,14 @@ class Instrument(object):
             host = res['arg1']
             name = res['arg2']
 
+        self.client = CoreClient(host)
+
         self.host = host
         self.name = name
         self.client_id = client_id
         self.term_char = term_char
-        self.lock_timeout = 10000
-        self.timeout = 10000
-        self.client = CoreClient(host)
+        self.lock_timeout = 10
+        self.timeout = 10
         self.link = None
         self.max_recv_size = 0
 
@@ -375,12 +376,36 @@ class Instrument(object):
         if self.client_id is None:
             self.client_id = random.getrandbits(31)
 
+    @property
+    def timeout(self):
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, val):
+        self._timeout = val
+        self._timeout_ms = int(val * 1000)
+        if self.client is not None:
+            self.client.sock.settimeout(self.timeout+1)
+
+    @property
+    def lock_timeout(self):
+        return self._lock_timeout
+
+    @lock_timeout.setter
+    def lock_timeout(self, val):
+        self._lock_timeout = val
+        self._lock_timeout_ms = int(val * 1000)
+
     def open(self):
         "Open connection to VXI-11 instrument"
         if self.client is None:
             self.client = CoreClient(self.host)
 
-        error, link, abort_port, max_recv_size = self.client.create_link(self.client_id, 0, self.lock_timeout, self.name.encode("utf-8"))
+        self.client.sock.settimeout(self.timeout+1)
+        error, link, abort_port, max_recv_size = self.client.create_link(self.client_id,
+                                                                         0,
+                                                                         self._lock_timeout_ms,
+                                                                         self.name.encode("utf-8"))
 
         if error:
             raise Vxi11Exception(error, 'open')
@@ -417,7 +442,11 @@ class Instrument(object):
 
             block = data[offset:offset+self.max_recv_size]
 
-            error, size = self.client.device_write(self.link, self.timeout, self.lock_timeout, flags, block)
+            error, size = self.client.device_write(self.link,
+                                                   self._timeout_ms,
+                                                   self._lock_timeout_ms,
+                                                   flags,
+                                                   block)
 
             if error:
                 raise Vxi11Exception(error, 'write')
@@ -448,7 +477,12 @@ class Instrument(object):
         read_data = b''
 
         while reason & (RX_END | RX_CHR) == 0:
-            error, reason, data = self.client.device_read(self.link, read_len, self.timeout, self.lock_timeout, flags, term_char)
+            error, reason, data = self.client.device_read(self.link,
+                                                          read_len,
+                                                          self._timeout_ms,
+                                                          self._lock_timeout_ms,
+                                                          flags,
+                                                          term_char)
 
             if error:
                 raise Vxi11Exception(error, 'read')
@@ -502,7 +536,10 @@ class Instrument(object):
 
         flags = 0
 
-        error, stb = self.client.device_read_stb(self.link, flags, self.lock_timeout, self.timeout)
+        error, stb = self.client.device_read_stb(self.link,
+                                                 flags,
+                                                 self._lock_timeout_ms,
+                                                 self._timeout_ms)
 
         if error:
             raise Vxi11Exception(error, 'read_stb')
@@ -516,7 +553,10 @@ class Instrument(object):
 
         flags = 0
 
-        error = self.client.device_trigger(self.link, flags, self.lock_timeout, self.timeout)
+        error = self.client.device_trigger(self.link,
+                                           flags,
+                                           self._lock_timeout_ms,
+                                           self._timeout_ms)
 
         if error:
             raise Vxi11Exception(error, 'trigger')
@@ -528,7 +568,10 @@ class Instrument(object):
 
         flags = 0
 
-        error = self.client.device_clear(self.link, flags, self.lock_timeout, self.timeout)
+        error = self.client.device_clear(self.link,
+                                         flags,
+                                         self._lock_timeout_ms,
+                                         self._timeout_ms)
 
         if error:
             raise Vxi11Exception(error, 'clear')
@@ -540,7 +583,10 @@ class Instrument(object):
 
         flags = 0
 
-        error = self.client.device_remote(self.link, flags, self.lock_timeout, self.timeout)
+        error = self.client.device_remote(self.link,
+                                          flags,
+                                          self._lock_timeout_ms,
+                                          self._timeout_ms)
 
         if error:
             raise Vxi11Exception(error, 'remote')
@@ -552,7 +598,10 @@ class Instrument(object):
 
         flags = 0
 
-        error = self.client.device_local(self.link, flags, self.lock_timeout, self.timeout)
+        error = self.client.device_local(self.link,
+                                         flags,
+                                         self._lock_timeout_ms,
+                                         self._timeout_ms)
 
         if error:
             raise Vxi11Exception(error, 'local')
@@ -564,7 +613,9 @@ class Instrument(object):
 
         flags = 0
 
-        error = self.client.device_lock(self.link, flags, self.lock_timeout)
+        error = self.client.device_lock(self.link,
+                                        flags,
+                                        self._lock_timeout_ms)
 
         if error:
             raise Vxi11Exception(error, 'lock')
