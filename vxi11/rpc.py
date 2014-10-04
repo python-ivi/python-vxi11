@@ -265,13 +265,21 @@ class RawTCPClient(Client):
     def do_call(self):
         call = self.packer.get_buf()
         sendrecord(self.sock, call)
-        reply = recvrecord(self.sock)
-        u = self.unpacker
-        u.reset(reply)
-        xid, verf = u.unpack_replyheader()
-        if xid != self.lastxid:
-            # Can't really happen since this is TCP...
-            raise RPCError('wrong xid in reply %r instead of %r' % (xid, self.lastxid))
+        while True:
+            reply = recvrecord(self.sock)
+            u = self.unpacker
+            u.reset(reply)
+            xid, verf = u.unpack_replyheader()
+            if xid == self.lastxid:
+                # xid matches, we're done
+                return
+            elif xid < self.lastxid:
+                # Stale data in buffer due to interruption
+                # Discard and fetch another record
+                continue
+            else:
+                # xid larger than expected - packet from the future?
+                raise RPCError('wrong xid in reply %r instead of %r' % (xid, self.lastxid))
 
 
 # Client using UDP to a specific port
