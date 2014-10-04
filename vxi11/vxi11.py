@@ -346,6 +346,19 @@ class CoreClient(rpc.TCPClient):
                 None,
                 self.unpacker.unpack_device_error)
 
+
+class AbortClient(rpc.TCPClient):
+    def __init__(self, host, port=0):
+        self.packer = Packer()
+        self.unpacker = Unpacker('')
+        rpc.TCPClient.__init__(self, host, DEVICE_ASYNC_PROG, DEVICE_ASYNC_VERS, port)
+
+    def device_abort(self, link):
+        return self.make_call(DEVICE_ABORT, link,
+                self.packer.pack_device_link,
+                self.unpacker.unpack_device_error)
+
+
 class Instrument(object):
     "VXI-11 instrument interface client"
     def __init__(self, host, name = None, client_id = None, term_char = None):
@@ -361,6 +374,7 @@ class Instrument(object):
             name = res['arg2']
 
         self.client = CoreClient(host)
+        self.abort_client = None
 
         self.host = host
         self.name = name
@@ -368,6 +382,7 @@ class Instrument(object):
         self.term_char = term_char
         self.lock_timeout = 10
         self.timeout = 10
+        self.abort_port = 0
         self.link = None
         self.max_recv_size = 0
 
@@ -387,6 +402,8 @@ class Instrument(object):
         self._timeout_ms = int(val * 1000)
         if self.client is not None:
             self.client.sock.settimeout(self.timeout+1)
+        if self.abort_client is not None:
+            self.abort_client.sock.settimeout(self.timeout+1)
 
     @property
     def lock_timeout(self):
@@ -411,6 +428,10 @@ class Instrument(object):
         if error:
             raise Vxi11Exception(error, 'open')
 
+        self.abort_port = abort_port
+        self.abort_client = AbortClient(self.host, abort_port)
+        self.abort_client.sock.settimeout(self.timeout)
+
         self.link = link
         self.max_recv_size = min(max_recv_size, 1073741824)
 
@@ -420,6 +441,17 @@ class Instrument(object):
         self.client.close()
         self.link = None
         self.client = None
+
+    def abort(self):
+        "Asynchronous abort"
+        if self.link is None:
+            self.open()
+
+        self.abort_client.sock.settimeout(1.0)
+        error = self.abort_client.device_abort(self.link)
+
+        if error:
+            raise Vxi11Exception(error, 'abort')
 
     def write_raw(self, data):
         "Write binary data to instrument"
