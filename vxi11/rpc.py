@@ -589,20 +589,27 @@ class Server:
         self.prog = prog
         self.vers = vers
         self.port = port # Should normally be 0 for random port
-        self.port = port
+        self.registered = False
         self.addpackers()
+
+    def __del__(self):
+        # make sure to unregister on delete
+        if self.registered:
+            self.unregister()
 
     def register(self):
         mapping = self.prog, self.vers, self.prot, self.port
         p = TCPPortMapperClient(self.host)
         if not p.set(mapping):
             raise RPCError('register failed')
+        self.registered = True
 
     def unregister(self):
         mapping = self.prog, self.vers, self.prot, self.port
         p = TCPPortMapperClient(self.host)
         if not p.unset(mapping):
             raise RPCError('unregister failed')
+        self.registered = False
 
     def handle(self, call):
         # Don't use unpack_header but parse the header piecewise
