@@ -688,6 +688,7 @@ class TCPServer(Server):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.prot = IPPROTO_TCP
         self.sock.bind((self.host, self.port))
+        self.host, self.port = self.sock.getsockname()
 
     def loop(self):
         self.sock.listen(0)
@@ -747,6 +748,7 @@ class UDPServer(Server):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.prot = IPPROTO_UDP
         self.sock.bind((self.host, self.port))
+        self.host, self.port = self.sock.getsockname()
 
     def loop(self):
         while 1:
