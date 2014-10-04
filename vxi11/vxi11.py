@@ -213,12 +213,113 @@ class Packer(rpc.Packer):
         self.pack_int(datasize)
         self.pack_opaque(data_in)
 
+    def pack_device_error(self, error):
+        self.pack_int(error)
+
+    def pack_device_srq_parms(self, params):
+        handle = params
+        self.pack_opaque(handle)
+
+    def pack_create_link_resp(self, params):
+        error, link, abort_port, max_recv_size = params
+        self.pack_int(error)
+        self.pack_int(link)
+        self.pack_uint(abort_port)
+        self.pack_uint(max_recv_size)
+
+    def pack_device_write_resp(self, params):
+        error, size = params
+        self.pack_int(error)
+        self.pack_uint(size)
+
+    def pack_device_read_resp(self, params):
+        error, reason, data = params
+        self.pack_int(error)
+        self.pack_int(reason)
+        self.pack_opaque(data)
+
+    def pack_device_read_stb_resp(self, params):
+        error, stb = params
+        self.pack_int(error)
+        self.pack_uint(stb)
+
+    def pack_device_docmd_resp(self, params):
+        error, data_out = params
+        self.pack_int(error)
+        self.pack_opaque(data_out)
+
 class Unpacker(rpc.Unpacker):
     def unpack_device_link(self):
         return self.unpack_int()
 
+    def unpack_create_link_parms(self):
+        id = self.unpack_int()
+        lock_device = self.unpack_bool()
+        lock_timeout = self.unpack_uint()
+        device = self.unpack_string()
+        return id, lock_device, lock_timeout, device
+
+    def unpack_device_write_parms(self):
+        link = self.unpack_int()
+        timeout = self.unpack_uint()
+        lock_timeout = self.unpack_uint()
+        flags = self.unpack_int()
+        data = self.unpack_opaque()
+        return link, timeout, lock_timeout, flags, data
+
+    def unpack_device_read_parms(self):
+        link = self.unpack_int()
+        request_size = self.unpack_uint()
+        timeout = self.unpack_uint()
+        lock_timeout = self.unpack_uint()
+        flags = self.unpack_int()
+        term_char = self.unpack_int()
+        return link, request_size, timeout, lock_timeout, flags, term_char
+
+    def unpack_device_generic_parms(self):
+        link = self.unpack_int()
+        flags = self.unpack_int()
+        lock_timeout = self.unpack_uint()
+        timeout = self.unpack_uint()
+        return link, flags, lock_timeout, timeout
+
+    def unpack_device_remote_func_parms(self):
+        host_addr = self.unpack_uint()
+        host_port = self.unpack_uint()
+        prog_num = self.unpack_uint()
+        prog_vers = self.unpack_uint()
+        prog_family = self.unpack_int()
+        return host_addr, host_port, prog_num, prog_vers, prog_family
+
+    def unpack_device_enable_srq_parms(self):
+        link = self.unpack_int()
+        enable = self.unpack_bool()
+        handle = self.unpack_opaque()
+        return link, enable, handle
+
+    def unpack_device_lock_parms(self):
+        link = self.unpack_int()
+        flags = self.unpack_int()
+        lock_timeout = self.unpack_uint()
+        return link, flags, lock_timeout
+
+    def pack_device_docmd_parms(self):
+        link = self.unpack_int()
+        flags = self.unpack_int()
+        timeout = self.unpack_uint()
+        lock_timeout = self.unpack_uint()
+        cmd = self.unpack_int()
+        network_order = self.unpack_bool()
+        datasize = self.unpack_int()
+        data_in = self.unpack_opaque()
+        return link, flags, timeout, lock_timeout, cmd, network_order, datasize, data_in
+
     def unpack_device_error(self):
         return self.unpack_int()
+
+    def unpack_device_srq_params(self):
+        handle = self.unpack_opaque()
+        return handle
 
     def unpack_create_link_resp(self):
         error = self.unpack_int()
