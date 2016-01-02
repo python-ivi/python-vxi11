@@ -722,7 +722,7 @@ class TCPServer(Server):
         # Wait for deceased children
         try:
             while 1:
-                pid, sts = os.waitpid(0, 1)
+                pid, sts = os.waitpid(0, os.WNOHANG)
         except os.error:
             pass
         pid = None
