@@ -303,7 +303,7 @@ class Unpacker(rpc.Unpacker):
         lock_timeout = self.unpack_uint()
         return link, flags, lock_timeout
 
-    def pack_device_docmd_parms(self):
+    def unpack_device_docmd_parms(self):
         link = self.unpack_int()
         flags = self.unpack_int()
         timeout = self.unpack_uint()
@@ -439,7 +439,7 @@ class CoreClient(rpc.TCPClient):
     def create_intr_chan(self, host_addr, host_port, prog_num, prog_vers, prog_family):
         params = (host_addr, host_port, prog_num, prog_vers, prog_family)
         return self.make_call(CREATE_INTR_CHAN, params,
-                self.packer.pack_device_docmd_parms,
+                self.packer.pack_device_remote_func_parms,
                 self.unpacker.unpack_device_error)
 
     def destroy_intr_chan(self):
