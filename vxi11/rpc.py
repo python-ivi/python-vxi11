@@ -222,7 +222,8 @@ def sendfrag(sock, last, frag):
     sock.send(header + frag)
 
 def sendrecord(sock, record):
-    sendfrag(sock, 1, record)
+    if len(record) > 0:
+        sendfrag(sock, 1, record)
 
 def recvfrag(sock):
     header = sock.recv(4)
