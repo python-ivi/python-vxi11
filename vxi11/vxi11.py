@@ -517,6 +517,9 @@ class Instrument(object):
 
     def open(self):
         "Open connection to VXI-11 instrument"
+        if self.link is not None:
+            return
+
         if self.client is None:
             self.client = CoreClient(self.host)
 
@@ -538,6 +541,9 @@ class Instrument(object):
 
     def close(self):
         "Close connection"
+        if self.link is None:
+            return
+
         self.client.destroy_link(self.link)
         self.client.close()
         self.link = None
