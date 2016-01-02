@@ -493,6 +493,10 @@ class Instrument(object):
         if self.client_id is None:
             self.client_id = random.getrandbits(31)
 
+    def __del__(self):
+        if self.link is not None:
+            self.close()
+
     @property
     def timeout(self):
         return self._timeout
