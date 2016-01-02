@@ -474,7 +474,7 @@ class Instrument(object):
             host = res['arg1']
             name = res['arg2']
 
-        self.client = CoreClient(host)
+        self.client = None
         self.abort_client = None
 
         self.host = host
