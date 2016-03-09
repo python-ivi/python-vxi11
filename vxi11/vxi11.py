@@ -541,7 +541,7 @@ class Instrument(object):
         self.abort_client.sock.settimeout(self.timeout)
 
         self.link = link
-        self.max_recv_size = min(max_recv_size, 1073741824)
+        self.max_recv_size = min(max_recv_size, 1024*1024)
 
     def close(self):
         "Close connection"
