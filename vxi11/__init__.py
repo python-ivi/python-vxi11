@@ -27,4 +27,4 @@ THE SOFTWARE.
 __all__ = ["vxi11"]
 
 from .version import __version__
-from .vxi11 import Instrument
+from .vxi11 import Instrument, InterfaceDevice

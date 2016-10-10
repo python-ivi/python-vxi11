@@ -27,6 +27,7 @@ THE SOFTWARE.
 from . import rpc
 import random
 import re
+import struct
 
 # VXI-11 RPC constants
 
@@ -84,6 +85,24 @@ OP_FLAG_TERMCHAR_SET = 128
 RX_REQCNT = 1
 RX_CHR = 2
 RX_END = 4
+
+# IEEE 488.1 interface device commands
+CMD_SEND_COMMAND = 0x020000
+CMD_BUS_STATUS   = 0x020001
+CMD_ATN_CTRL     = 0x020002
+CMD_REN_CTRL     = 0x020003
+CMD_PASS_CTRL    = 0x020004
+CMD_BUS_ADDRESS  = 0x02000A
+CMD_IFC_CTRL     = 0x020010
+
+CMD_BUS_STATUS_REMOTE = 1
+CMD_BUS_STATUS_SRQ = 2
+CMD_BUS_STATUS_NDAC = 3
+CMD_BUS_STATUS_SYSTEM_CONTROLLER = 4
+CMD_BUS_STATUS_CONTROLLER_IN_CHARGE = 5
+CMD_BUS_STATUS_TALKER = 6
+CMD_BUS_STATUS_LISTENER = 7
+CMD_BUS_STATUS_BUS_ADDRESS = 8
 
 def parse_visa_resource_string(resource_string):
     # valid resource strings:
@@ -774,6 +793,211 @@ class Device(object):
 
         if error:
             raise Vxi11Exception(error, 'unlock')
+
+
+class InterfaceDevice(Device):
+    "VXI-11 IEEE 488.1 interface device interface client"
+
+    def open(self):
+        "Open connection to VXI-11 device"
+        if self.link is not None:
+            return
+
+        if ',' in self.name:
+            raise Vxi11Exception("Cannot specify address for InterfaceDevice")
+
+        super(InterfaceDevice, self).open()
+
+    def send_command(self, data):
+        "Send command"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, data_out = self.client.device_docmd(
+            self.link,
+            flags,
+            self._timeout_ms,
+            self._lock_timeout_ms,
+            CMD_SEND_COMMAND,
+            True,
+            1,
+            data
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'send_command')
+
+        return data_out
+
+    def _bus_status(self, val):
+        "Bus status"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, data_out = self.client.device_docmd(
+            self.link,
+            flags,
+            self._timeout_ms,
+            self._lock_timeout_ms,
+            CMD_BUS_STATUS,
+            True,
+            1,
+            struct.pack('!H', val)
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'bus_status')
+
+        return struct.unpack('!H', data_out)[0]
+
+    def test_ren(self):
+        "Read REN line"
+        return self._bus_status(CMD_BUS_STATUS_REMOTE)
+
+    def test_srq(self):
+        "Read SRQ line"
+        return self._bus_status(CMD_BUS_STATUS_SRQ)
+
+    def test_ndac(self):
+        "Read NDAC line"
+        return self._bus_status(CMD_BUS_STATUS_NDAC)
+
+    def is_system_controller(self):
+        "Check if interface device is a system controller"
+        return self._bus_status(CMD_BUS_STATUS_SYSTEM_CONTROLLER)
+
+    def is_controller_in_charge(self):
+        "Check if interface device is the controller-in-charge"
+        return self._bus_status(CMD_BUS_STATUS_CONTROLLER_IN_CHARGE)
+
+    def is_talker(self):
+        "Check if interface device is addressed as a talker"
+        return self._bus_status(CMD_BUS_STATUS_TALKER)
+
+    def is_listener(self):
+        "Check if interface device is addressed as a listener"
+        return self._bus_status(CMD_BUS_STATUS_LISTENER)
+
+    def get_bus_address(self):
+        "Get interface device bus address"
+        return self._bus_status(CMD_BUS_STATUS_BUS_ADDRESS)
+
+    def set_atn(self, val):
+        "Set ATN line"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, data_out = self.client.device_docmd(
+            self.link,
+            flags,
+            self._timeout_ms,
+            self._lock_timeout_ms,
+            CMD_ATN_CTRL,
+            True,
+            1,
+            struct.pack('!H', val)
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'set_atn')
+
+        return struct.unpack('!H', data_out)[0]
+
+    def set_ren(self, val):
+        "Set REN line"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, data_out = self.client.device_docmd(
+            self.link,
+            flags,
+            self._timeout_ms,
+            self._lock_timeout_ms,
+            CMD_REN_CTRL,
+            True,
+            1,
+            struct.pack('!H', val)
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'set_ren')
+
+        return struct.unpack('!H', data_out)[0]
+
+    def pass_control(self, val):
+        "Pass control to another controller"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, data_out = self.client.device_docmd(
+            self.link,
+            flags,
+            self._timeout_ms,
+            self._lock_timeout_ms,
+            CMD_PASS_CTRL,
+            True,
+            1,
+            struct.pack('!L', val)
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'pass_control')
+
+        return struct.unpack('!L', data_out)[0]
+
+    def set_bus_address(self, val):
+        "Set interface device bus address"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, data_out = self.client.device_docmd(
+            self.link,
+            flags,
+            self._timeout_ms,
+            self._lock_timeout_ms,
+            CMD_BUS_ADDRESS,
+            True,
+            1,
+            struct.pack('!L', val)
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'set_bus_address')
+
+        return struct.unpack('!L', data_out)[0]
+
+    def send_ifc(self):
+        "Send IFC"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, data_out = self.client.device_docmd(
+            self.link,
+            flags,
+            self._timeout_ms,
+            self._lock_timeout_ms,
+            CMD_IFC_CTRL,
+            True,
+            1,
+            b''
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'send_ifc')
 
 
 class Instrument(Device):
