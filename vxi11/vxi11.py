@@ -104,6 +104,24 @@ CMD_BUS_STATUS_TALKER = 6
 CMD_BUS_STATUS_LISTENER = 7
 CMD_BUS_STATUS_BUS_ADDRESS = 8
 
+GPIB_CMD_GTL = 0x01 # go to local
+GPIB_CMD_SDC = 0x04 # selected device clear
+GPIB_CMD_PPC = 0x05 # parallel poll config
+GPIB_CMD_GET = 0x08 # group execute trigger
+GPIB_CMD_TCT = 0x09 # take control
+GPIB_CMD_LLO = 0x11 # local lockout
+GPIB_CMD_DCL = 0x14 # device clear
+GPIB_CMD_PPU = 0x15 # parallel poll unconfigure
+GPIB_CMD_SPE = 0x18 # serial poll enable
+GPIB_CMD_SPD = 0x19 # serial poll disable
+GPIB_CMD_LAD = 0x20 # listen address (base)
+GPIB_CMD_UNL = 0x3F # unlisten
+GPIB_CMD_TAD = 0x40 # talk address (base)
+GPIB_CMD_UNT = 0x5F # untalk
+GPIB_CMD_SAD = 0x60 # my secondary address (base)
+GPIB_CMD_PPE = 0x60 # parallel poll enable (base)
+GPIB_CMD_PPD = 0x70 # parallel poll disable
+
 def parse_visa_resource_string(resource_string):
     # valid resource strings:
     # TCPIP::10.0.0.1::INSTR
@@ -804,6 +822,29 @@ class InterfaceDevice(Device):
             raise Vxi11Exception(error, 'send_command')
 
         return data_out
+
+    def create_setup(self, address_list):
+        data = bytearray([self._bus_address | GPIB_CMD_TAD, GPIB_CMD_UNL])
+
+        for addr in address_list:
+            if type(addr) == tuple:
+                if addr[0] < 0 or addr[0] > 30:
+                    raise Vxi11Exception("Invalid address", 'create_setup')
+                data.append(addr[0] | GPIB_CMD_LAD)
+                if len(addr) > 1:
+                    if addr[1] < 0 or addr[1] > 30:
+                        raise Vxi11Exception("Invalid address", 'create_setup')
+                    data.append(addr[1] | GPIB_CMD_SAD)
+            else:
+                if addr < 0 or addr > 30:
+                    raise Vxi11Exception("Invalid address", 'create_setup')
+                data.append(addr | GPIB_CMD_LAD)
+
+        return bytes(data)
+
+    def send_setup(self, address_list):
+        "Send setup"
+        return self.send_command(self.create_setup(address_list))
 
     def _bus_status(self, val):
         "Bus status"
