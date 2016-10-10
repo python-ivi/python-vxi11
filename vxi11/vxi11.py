@@ -732,40 +732,6 @@ class Device(object):
         if error:
             raise Vxi11Exception(error, 'clear')
 
-    def remote(self):
-        "Send remote command"
-        if self.link is None:
-            self.open()
-
-        flags = 0
-
-        error = self.client.device_remote(
-            self.link,
-            flags,
-            self._lock_timeout_ms,
-            self._timeout_ms
-        )
-
-        if error:
-            raise Vxi11Exception(error, 'remote')
-
-    def local(self):
-        "Send local command"
-        if self.link is None:
-            self.open()
-
-        flags = 0
-
-        error = self.client.device_local(
-            self.link,
-            flags,
-            self._lock_timeout_ms,
-            self._timeout_ms
-        )
-
-        if error:
-            raise Vxi11Exception(error, 'local')
-
     def lock(self):
         "Send lock command"
         if self.link is None:
@@ -1021,4 +987,38 @@ class Instrument(Device):
             raise Vxi11Exception(error, 'read_stb')
 
         return stb
+
+    def remote(self):
+        "Send remote command"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error = self.client.device_remote(
+            self.link,
+            flags,
+            self._lock_timeout_ms,
+            self._timeout_ms
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'remote')
+
+    def local(self):
+        "Send local command"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error = self.client.device_local(
+            self.link,
+            flags,
+            self._lock_timeout_ms,
+            self._timeout_ms
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'local')
 
