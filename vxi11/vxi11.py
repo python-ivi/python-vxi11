@@ -763,6 +763,12 @@ class Device(object):
 
 class InterfaceDevice(Device):
     "VXI-11 IEEE 488.1 interface device interface client"
+    def __init__(self, host, name = None, client_id = None, term_char = None):
+        "Create new VXI-11 488.1 interface device object"
+
+        super(InterfaceDevice, self).__init__(host, name, client_id, term_char)
+
+        self._bus_address = 0
 
     def open(self):
         "Open connection to VXI-11 device"
@@ -773,6 +779,8 @@ class InterfaceDevice(Device):
             raise Vxi11Exception("Cannot specify address for InterfaceDevice")
 
         super(InterfaceDevice, self).open()
+
+        self._bus_address = self.get_bus_address()
 
     def send_command(self, data):
         "Send command"
@@ -898,8 +906,12 @@ class InterfaceDevice(Device):
 
         return struct.unpack('!H', data_out)[0]
 
-    def pass_control(self, val):
+    def pass_control(self, addr):
         "Pass control to another controller"
+
+        if addr < 0 or addr > 30:
+            raise Vxi11Exception("Invalid address", 'pass_control')
+
         if self.link is None:
             self.open()
 
@@ -913,7 +925,7 @@ class InterfaceDevice(Device):
             CMD_PASS_CTRL,
             True,
             1,
-            struct.pack('!L', val)
+            struct.pack('!L', addr)
         )
 
         if error:
@@ -921,8 +933,12 @@ class InterfaceDevice(Device):
 
         return struct.unpack('!L', data_out)[0]
 
-    def set_bus_address(self, val):
+    def set_bus_address(self, addr):
         "Set interface device bus address"
+
+        if addr < 0 or addr > 30:
+            raise Vxi11Exception("Invalid address", 'set_bus_address')
+
         if self.link is None:
             self.open()
 
@@ -936,11 +952,13 @@ class InterfaceDevice(Device):
             CMD_BUS_ADDRESS,
             True,
             1,
-            struct.pack('!L', val)
+            struct.pack('!L', addr)
         )
 
         if error:
             raise Vxi11Exception(error, 'set_bus_address')
+
+        self._bus_address = addr
 
         return struct.unpack('!L', data_out)[0]
 
