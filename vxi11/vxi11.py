@@ -460,10 +460,10 @@ class AbortClient(rpc.TCPClient):
                 self.unpacker.unpack_device_error)
 
 
-class Instrument(object):
-    "VXI-11 instrument interface client"
+class Device(object):
+    "VXI-11 device interface client"
     def __init__(self, host, name = None, client_id = None, term_char = None):
-        "Create new VXI-11 instrument object"
+        "Create new VXI-11 device object"
 
         if host.upper().startswith('TCPIP') and '::' in host:
             res = parse_visa_resource_string(host)
@@ -520,7 +520,7 @@ class Instrument(object):
         self._lock_timeout_ms = int(val * 1000)
 
     def open(self):
-        "Open connection to VXI-11 instrument"
+        "Open connection to VXI-11 device"
         if self.link is not None:
             return
 
@@ -679,25 +679,6 @@ class Instrument(object):
         self.write(message, encoding)
         return self.read(num, encoding)
 
-    def read_stb(self):
-        "Read status byte"
-        if self.link is None:
-            self.open()
-
-        flags = 0
-
-        error, stb = self.client.device_read_stb(
-            self.link,
-            flags,
-            self._lock_timeout_ms,
-            self._timeout_ms
-        )
-
-        if error:
-            raise Vxi11Exception(error, 'read_stb')
-
-        return stb
-
     def trigger(self):
         "Send trigger command"
         if self.link is None:
@@ -795,4 +776,25 @@ class Instrument(object):
             raise Vxi11Exception(error, 'unlock')
 
 
+class Instrument(Device):
+    "VXI-11 instrument interface client"
+
+    def read_stb(self):
+        "Read status byte"
+        if self.link is None:
+            self.open()
+
+        flags = 0
+
+        error, stb = self.client.device_read_stb(
+            self.link,
+            flags,
+            self._lock_timeout_ms,
+            self._timeout_ms
+        )
+
+        if error:
+            raise Vxi11Exception(error, 'read_stb')
+
+        return stb
 
