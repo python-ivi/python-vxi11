@@ -819,7 +819,7 @@ class InterfaceDevice(Device):
             self._lock_timeout_ms,
             CMD_BUS_STATUS,
             True,
-            1,
+            2,
             struct.pack('!H', val)
         )
 
@@ -874,7 +874,7 @@ class InterfaceDevice(Device):
             self._lock_timeout_ms,
             CMD_ATN_CTRL,
             True,
-            1,
+            2,
             struct.pack('!H', val)
         )
 
@@ -897,7 +897,7 @@ class InterfaceDevice(Device):
             self._lock_timeout_ms,
             CMD_REN_CTRL,
             True,
-            1,
+            2,
             struct.pack('!H', val)
         )
 
@@ -924,7 +924,7 @@ class InterfaceDevice(Device):
             self._lock_timeout_ms,
             CMD_PASS_CTRL,
             True,
-            1,
+            4,
             struct.pack('!L', addr)
         )
 
@@ -951,7 +951,7 @@ class InterfaceDevice(Device):
             self._lock_timeout_ms,
             CMD_BUS_ADDRESS,
             True,
-            1,
+            4,
             struct.pack('!L', addr)
         )
 
