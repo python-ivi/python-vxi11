@@ -28,6 +28,7 @@ from . import rpc
 import random
 import re
 import struct
+import time
 
 # VXI-11 RPC constants
 
@@ -1023,6 +1024,52 @@ class InterfaceDevice(Device):
 
         if error:
             raise Vxi11Exception(error, 'send_ifc')
+
+    def find_listeners(self, address_list=None):
+        "Find devices"
+        if address_list is None:
+            address_list = range(31)
+
+        found = []
+
+        for addr in address_list:
+            # check for listener at primary address
+            cmd = bytearray([GPIB_CMD_UNL, GPIB_CMD_UNT])
+            cmd.append(self._bus_address | GPIB_CMD_TAD) # spec says this is unnecessary, but doesn't appear to work without this
+            if type(addr) == tuple:
+                addr = addr[0]
+            if addr < 0 or addr > 30:
+                raise Vxi11Exception("Invalid address", 'find_listeners')
+            cmd.append(addr | GPIB_CMD_LAD)
+            self.send_command(cmd)
+            self.set_atn(False)
+            time.sleep(0.0015) # probably not necessary due to network delays
+            if self.test_ndac():
+                found.append(addr)
+            else:
+                # check for listener at any sub-address
+                cmd = bytearray([GPIB_CMD_UNL, GPIB_CMD_UNT])
+                cmd.append(self._bus_address | GPIB_CMD_TAD) # spec says this is unnecessary, but doesn't appear to work without this
+                cmd.append(addr | GPIB_CMD_LAD)
+                for sa in range(31):
+                    cmd.append(sa | GPIB_CMD_SAD)
+                self.send_command(cmd)
+                self.set_atn(False)
+                time.sleep(0.0015) # probably not necessary due to network delays
+                if self.test_ndac():
+                    # find specific sub-address
+                    for sa in range(31):
+                        cmd = bytearray([GPIB_CMD_UNL, GPIB_CMD_UNT])
+                        cmd.append(self._bus_address | GPIB_CMD_TAD) # spec says this is unnecessary, but doesn't appear to work without this
+                        cmd.append(addr | GPIB_CMD_LAD)
+                        cmd.append(sa | GPIB_CMD_SAD)
+                        self.send_command(cmd)
+                        self.set_atn(False)
+                        time.sleep(0.0015) # probably not necessary due to network delays
+                        if self.test_ndac():
+                            found.append((addr, sa))
+
+        return found
 
 
 class Instrument(Device):
