@@ -1042,6 +1042,9 @@ class InterfaceDevice(Device):
 
     def find_listeners(self, address_list=None):
         "Find devices"
+        if self.link is None:
+            self.open()
+
         if address_list is None:
             address_list = list(range(31))
             address_list.remove(self._bus_address)
