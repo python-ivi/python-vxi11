@@ -530,6 +530,7 @@ class Device(object):
         self.abort_port = 0
         self.link = None
         self.max_recv_size = 0
+        self.locked = False
 
     def __del__(self):
         if self.link is not None:
@@ -767,6 +768,8 @@ class Device(object):
         if error:
             raise Vxi11Exception(error, 'lock')
 
+        self.locked = True
+
     def unlock(self):
         "Send unlock command"
         if self.link is None:
@@ -778,6 +781,8 @@ class Device(object):
 
         if error:
             raise Vxi11Exception(error, 'unlock')
+
+        self.locked = False
 
 
 class InterfaceDevice(Device):
