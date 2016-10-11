@@ -1043,7 +1043,8 @@ class InterfaceDevice(Device):
     def find_listeners(self, address_list=None):
         "Find devices"
         if address_list is None:
-            address_list = range(31)
+            address_list = list(range(31))
+            address_list.remove(self._bus_address)
 
         found = []
 
