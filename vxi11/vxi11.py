@@ -512,6 +512,12 @@ class Device(object):
             host = res['arg1']
             name = res['arg2']
 
+        if name is None:
+            name = "inst0"
+
+        if client_id is None:
+            client_id = random.getrandbits(31)
+
         self.client = None
         self.abort_client = None
 
@@ -524,12 +530,6 @@ class Device(object):
         self.abort_port = 0
         self.link = None
         self.max_recv_size = 0
-
-        if self.name is None:
-            self.name = "inst0"
-
-        if self.client_id is None:
-            self.client_id = random.getrandbits(31)
 
     def __del__(self):
         if self.link is not None:
