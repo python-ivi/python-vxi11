@@ -827,8 +827,11 @@ class InterfaceDevice(Device):
     def create_setup(self, address_list):
         data = bytearray([self._bus_address | GPIB_CMD_TAD, GPIB_CMD_UNL])
 
+        if type(address_list) is int:
+            address_list = [address_list]
+
         for addr in address_list:
-            if type(addr) == tuple:
+            if type(addr) is tuple:
                 if addr[0] < 0 or addr[0] > 30:
                     raise Vxi11Exception("Invalid address", 'create_setup')
                 data.append(addr[0] | GPIB_CMD_LAD)
