@@ -785,6 +785,18 @@ class InterfaceDevice(Device):
     def __init__(self, host, name = None, client_id = None, term_char = None):
         "Create new VXI-11 488.1 interface device object"
 
+        if host.upper().startswith('TCPIP') and '::' in host:
+            res = parse_visa_resource_string(host)
+
+            if res is None:
+                raise Vxi11Exception('Invalid resource string', 'init')
+
+            host = res['arg1']
+            name = res['arg2']
+
+        if name is None:
+            name = "gpib0"
+
         super(InterfaceDevice, self).__init__(host, name, client_id, term_char)
 
         self._bus_address = 0
