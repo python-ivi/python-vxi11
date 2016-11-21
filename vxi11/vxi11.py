@@ -578,8 +578,6 @@ class Device(object):
             raise Vxi11Exception(error, 'open')
 
         self.abort_port = abort_port
-        self.abort_client = AbortClient(self.host, abort_port)
-        self.abort_client.sock.settimeout(self.timeout)
 
         self.link = link
         self.max_recv_size = min(max_recv_size, 1024*1024)
@@ -599,7 +597,10 @@ class Device(object):
         if self.link is None:
             self.open()
 
-        self.abort_client.sock.settimeout(1.0)
+        if self.abort_client is None:
+            self.abort_client = AbortClient(self.host, self.abort_port)
+            self.abort_client.sock.settimeout(self.timeout)
+
         error = self.abort_client.device_abort(self.link)
 
         if error:
