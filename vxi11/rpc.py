@@ -219,7 +219,7 @@ def sendfrag(sock, last, frag):
     x = len(frag)
     if last: x = x | 0x80000000
     header = struct.pack(">I", x)
-    sock.send(header + frag)
+    sock.sendall(header + frag)
 
 def sendrecord(sock, record):
     if len(record) > 0:
