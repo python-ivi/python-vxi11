@@ -11,7 +11,7 @@ pure Python and highly portable.
 It is released under the MIT license, see LICENSE_ for more
 details.
 
-Copyright (C) 2012-2013 Alex Forencich <alex@alexforencich.com>
+Copyright (c) 2012-2017 Alex Forencich and Michael Walle
 
 See also:
 
