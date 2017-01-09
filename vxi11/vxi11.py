@@ -498,6 +498,29 @@ class AbortClient(rpc.TCPClient):
                 self.unpacker.unpack_device_error)
 
 
+def list_devices(ip=None, timeout=1):
+    "Detect VXI-11 devices on network"
+
+    if ip is None:
+        ip = ['255.255.255.255']
+
+    if type(ip) is str:
+        ip = [ip]
+
+    hosts = []
+
+    for addr in ip:
+        pmap = rpc.BroadcastUDPPortMapperClient(addr)
+        pmap.set_timeout(timeout)
+        resp = pmap.get_port((DEVICE_CORE_PROG, DEVICE_CORE_VERS, rpc.IPPROTO_TCP, 0))
+
+        l = [r[1][0] for r in resp if r[0] > 0]
+
+        hosts.extend(l)
+
+    return hosts
+
+
 class Device(object):
     "VXI-11 device interface client"
     def __init__(self, host, name = None, client_id = None, term_char = None):
