@@ -521,6 +521,25 @@ def list_devices(ip=None, timeout=1):
     return hosts
 
 
+def list_resources(ip=None, timeout=1):
+    "List resource strings for all detected VXI-11 devices"
+
+    res = []
+
+    for host in list_devices(ip, timeout):
+        try:
+            # try connecting as a GPIB interface
+            intf_dev = InterfaceDevice(host)
+            # enumerate connected devices
+            devs = intf_dev.find_listeners()
+            res.extend(['TCPIP::%s::gpib0,%d::INSTR' % (host, d) for d in devs])
+        except:
+            # if that fails, just list the host
+            res.append("TCPIP::%s::INSTR" % host)
+
+    return res
+
+
 class Device(object):
     "VXI-11 device interface client"
     def __init__(self, host, name = None, client_id = None, term_char = None):
