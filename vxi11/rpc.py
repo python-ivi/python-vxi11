@@ -232,21 +232,20 @@ def recvfrag(sock):
     x = struct.unpack(">I", header[0:4])[0]
     last = ((x & 0x80000000) != 0)
     n = int(x & 0x7fffffff)
-    frag = b''
-    while n > 0:
-        buf = sock.recv(n)
+    frag = bytearray()
+    while len(frag) < n:
+        buf = sock.recv(n - len(frag))
         if not buf: raise EOFError
-        n = n - len(buf)
-        frag = frag + buf
+        frag.extend(buf)
     return last, frag
 
 def recvrecord(sock):
-    record = b''
+    record = bytearray()
     last = 0
     while not last:
         last, frag = recvfrag(sock)
-        record = record + frag
-    return record
+        record.extend(frag)
+    return bytes(record)
 
 
 # Client using TCP to a specific port
