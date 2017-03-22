@@ -628,11 +628,12 @@ class Device(object):
         "Close connection"
         if self.link is None:
             return
-
-        self.client.destroy_link(self.link)
-        self.client.close()
-        self.link = None
-        self.client = None
+        try:
+            self.client.destroy_link(self.link)
+        finally:
+            self.client.close()
+            self.link = None
+            self.client = None
 
     def abort(self):
         "Asynchronous abort"
