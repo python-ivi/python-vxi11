@@ -572,7 +572,6 @@ class Device(object):
         self.abort_port = 0
         self.link = None
         self.max_recv_size = 0
-        self.max_read_len = 128*1024*1024
         self.locked = False
 
     def __del__(self):
@@ -693,9 +692,9 @@ class Device(object):
         if self.link is None:
             self.open()
 
-        read_len = self.max_read_len
-        if num > 0:
-            read_len = min(num, self.max_read_len)
+        read_len = self.max_recv_size
+        if num > 0 and num < self.max_recv_size:
+            read_len = num
 
         flags = 0
         reason = 0
