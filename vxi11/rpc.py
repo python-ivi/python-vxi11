@@ -251,12 +251,13 @@ def recvrecord(sock):
 # Client using TCP to a specific port
 
 class RawTCPClient(Client):
-    def __init__(self, host, prog, vers, port):
+    def __init__(self, host, prog, vers, port, timeout=None):
         Client.__init__(self, host, prog, vers, port)
-        self.connect()
+        self.connect(timeout)
 
-    def connect(self):
+    def connect(self, timeout=None):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(timeout)
         self.sock.connect((self.host, self.port))
 
     def close(self):
@@ -285,12 +286,13 @@ class RawTCPClient(Client):
 # Client using UDP to a specific port
 
 class RawUDPClient(Client):
-    def __init__(self, host, prog, vers, port):
+    def __init__(self, host, prog, vers, port, timeout=None):
         Client.__init__(self, host, prog, vers, port)
-        self.connect()
+        self.connect(timeout)
 
-    def connect(self):
+    def connect(self, timeout=None):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.settimeout(timeout)
         self.sock.connect((self.host, self.port))
 
     def close(self):
@@ -337,8 +339,9 @@ class RawBroadcastUDPClient(RawUDPClient):
         self.reply_handler = None
         self.timeout = 30
 
-    def connect(self):
+    def connect(self, timeout=None):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.settimeout(timeout)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     def set_reply_handler(self, reply_handler):
@@ -488,15 +491,15 @@ class PartialPortMapperClient:
 
 class TCPPortMapperClient(PartialPortMapperClient, RawTCPClient):
 
-    def __init__(self, host):
-        RawTCPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, PMAP_PORT)
+    def __init__(self, host, timeout=None):
+        RawTCPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, PMAP_PORT, timeout)
         PartialPortMapperClient.__init__(self)
 
 
 class UDPPortMapperClient(PartialPortMapperClient, RawUDPClient):
 
-    def __init__(self, host):
-        RawUDPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, PMAP_PORT)
+    def __init__(self, host, timeout=None):
+        RawUDPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, PMAP_PORT, timeout)
         PartialPortMapperClient.__init__(self)
 
 
@@ -511,26 +514,26 @@ class BroadcastUDPPortMapperClient(PartialPortMapperClient, RawBroadcastUDPClien
 
 class TCPClient(RawTCPClient):
 
-    def __init__(self, host, prog, vers, port=0):
+    def __init__(self, host, prog, vers, port=0, timeout=None):
         if port == 0:
-            pmap = TCPPortMapperClient(host)
+            pmap = TCPPortMapperClient(host, timeout)
             port = pmap.get_port((prog, vers, IPPROTO_TCP, 0))
             pmap.close()
         if port == 0:
             raise RPCError('program not registered')
-        RawTCPClient.__init__(self, host, prog, vers, port)
+        RawTCPClient.__init__(self, host, prog, vers, port, timeout)
 
 
 class UDPClient(RawUDPClient):
 
-    def __init__(self, host, prog, vers, port=0):
+    def __init__(self, host, prog, vers, port=0, timeout=None):
         if port == 0:
-            pmap = UDPPortMapperClient(host)
+            pmap = UDPPortMapperClient(host, timeout)
             port = pmap.get_port((prog, vers, IPPROTO_UDP, 0))
             pmap.close()
         if port == 0:
             raise RPCError('program not registered')
-        RawUDPClient.__init__(self, host, prog, vers, port)
+        RawUDPClient.__init__(self, host, prog, vers, port, timeout)
 
 
 class BroadcastUDPClient(Client):
