@@ -518,7 +518,7 @@ def list_devices(ip=None, timeout=1):
 
         hosts.extend(l)
 
-    return hosts
+    return sorted(hosts, key=lambda ip: tuple(int(part) for part in ip.split('.')))
 
 
 def list_resources(ip=None, timeout=1):
