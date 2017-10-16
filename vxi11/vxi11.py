@@ -528,14 +528,20 @@ def list_resources(ip=None, timeout=1):
 
     for host in list_devices(ip, timeout):
         try:
-            # try connecting as a GPIB interface
-            intf_dev = InterfaceDevice(host)
-            # enumerate connected devices
-            devs = intf_dev.find_listeners()
-            res.extend(['TCPIP::%s::gpib0,%d::INSTR' % (host, d) for d in devs])
-        except:
-            # if that fails, just list the host
+            # try connecting as an instrument
+            instr = Instrument(host)
+            instr.open()
             res.append("TCPIP::%s::INSTR" % host)
+        except:
+            try:
+                # try connecting as a GPIB interface
+                intf_dev = InterfaceDevice(host)
+                # enumerate connected devices
+                devs = intf_dev.find_listeners()
+                res.extend(['TCPIP::%s::gpib0,%d::INSTR' % (host, d) for d in devs])
+            except:
+                # if that fails, just list the host
+                res.append("TCPIP::%s::INSTR" % host)
 
     return res
 
