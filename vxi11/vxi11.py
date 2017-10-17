@@ -393,10 +393,10 @@ class Unpacker(rpc.Unpacker):
 
 
 class CoreClient(rpc.TCPClient):
-    def __init__(self, host, port=0):
+    def __init__(self, host, port=0, timeout=None):
         self.packer = Packer()
         self.unpacker = Unpacker('')
-        rpc.TCPClient.__init__(self, host, DEVICE_CORE_PROG, DEVICE_CORE_VERS, port)
+        rpc.TCPClient.__init__(self, host, DEVICE_CORE_PROG, DEVICE_CORE_VERS, port, timeout)
 
     def create_link(self, id, lock_device, lock_timeout, name):
         params = (id, lock_device, lock_timeout, name)
@@ -487,10 +487,10 @@ class CoreClient(rpc.TCPClient):
 
 
 class AbortClient(rpc.TCPClient):
-    def __init__(self, host, port=0):
+    def __init__(self, host, port=0, timeout=None):
         self.packer = Packer()
         self.unpacker = Unpacker('')
-        rpc.TCPClient.__init__(self, host, DEVICE_ASYNC_PROG, DEVICE_ASYNC_VERS, port)
+        rpc.TCPClient.__init__(self, host, DEVICE_ASYNC_PROG, DEVICE_ASYNC_VERS, port, timeout)
 
     def device_abort(self, link):
         return self.make_call(DEVICE_ABORT, link,
@@ -578,7 +578,6 @@ class Device(object):
         self.abort_port = 0
         self.link = None
         self.max_recv_size = 0
-        self.max_read_len = 128*1024*1024
         self.locked = False
 
     def __del__(self):
@@ -613,7 +612,7 @@ class Device(object):
             return
 
         if self.client is None:
-            self.client = CoreClient(self.host)
+            self.client = CoreClient(self.host, timeout=self.timeout)
 
         self.client.sock.settimeout(self.timeout+1)
         error, link, abort_port, max_recv_size = self.client.create_link(
@@ -633,13 +632,15 @@ class Device(object):
 
     def close(self):
         "Close connection"
-        if self.link is None:
+        if self.link is None or self.client is None:
             return
 
-        self.client.destroy_link(self.link)
-        self.client.close()
-        self.link = None
-        self.client = None
+        try:
+            self.client.destroy_link(self.link)
+        finally:
+            self.client.close()
+            self.link = None
+            self.client = None
 
     def abort(self):
         "Asynchronous abort"
@@ -647,7 +648,7 @@ class Device(object):
             self.open()
 
         if self.abort_client is None:
-            self.abort_client = AbortClient(self.host, self.abort_port)
+            self.abort_client = AbortClient(self.host, self.abort_port, timeout=self.timeout)
             self.abort_client.sock.settimeout(self.timeout)
 
         error = self.abort_client.device_abort(self.link)
@@ -698,9 +699,9 @@ class Device(object):
         if self.link is None:
             self.open()
 
-        read_len = self.max_read_len
-        if num > 0:
-            read_len = min(num, self.max_read_len)
+        read_len = self.max_recv_size
+        if num > 0 and num < self.max_recv_size:
+            read_len = num
 
         flags = 0
         reason = 0
