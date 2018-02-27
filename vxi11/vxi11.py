@@ -662,8 +662,8 @@ class Device(object):
 
         if self.term_char is not None:
             flags = OP_FLAG_TERMCHAR_SET
-            term_char = str(self.term_char).encode('utf-8')[0]
-            data += term_char
+            term_char = str(self.term_char).encode('utf-8')
+            data += struct.pack('B', ord(term_char))
 
         flags = 0
 
@@ -709,7 +709,7 @@ class Device(object):
 
         if self.term_char is not None:
             flags = OP_FLAG_TERMCHAR_SET
-            term_char = str(self.term_char).encode('utf-8')[0]
+            term_char = ord(str(self.term_char).encode('utf-8'))
 
         read_data = bytearray()
 
