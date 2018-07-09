@@ -257,6 +257,7 @@ class RawTCPClient(Client):
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(2.0)
         self.sock.connect((self.host, self.port))
 
     def close(self):
