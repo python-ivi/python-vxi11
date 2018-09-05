@@ -677,13 +677,17 @@ class Device(object):
 
             block = data[offset:offset+self.max_recv_size]
 
-            error, size = self.client.device_write(
-                self.link,
-                self._timeout_ms,
-                self._lock_timeout_ms,
-                flags,
-                block
-            )
+            try:
+                error, size = self.client.device_write(
+                    self.link,
+                    self._timeout_ms,
+                    self._lock_timeout_ms,
+                    flags,
+                    block
+                )
+            except KeyboardInterrupt:
+                self.link = None
+                raise
 
             if error:
                 raise Vxi11Exception(error, 'write')
@@ -714,15 +718,19 @@ class Device(object):
         read_data = bytearray()
 
         while reason & (RX_END | RX_CHR) == 0:
-            error, reason, data = self.client.device_read(
-                self.link,
-                read_len,
-                self._timeout_ms,
-                self._lock_timeout_ms,
-                flags,
-                term_char
-            )
-
+            try:
+                error, reason, data = self.client.device_read(
+                    self.link,
+                    read_len,
+                    self._timeout_ms,
+                    self._lock_timeout_ms,
+                    flags,
+                    term_char
+                )
+            except KeyboardInterrupt:
+                self.link = None
+                raise
+                
             if error:
                 raise Vxi11Exception(error, 'read')
 
