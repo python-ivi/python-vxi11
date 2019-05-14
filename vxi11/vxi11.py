@@ -393,10 +393,10 @@ class Unpacker(rpc.Unpacker):
 
 
 class CoreClient(rpc.TCPClient):
-    def __init__(self, host, port=0):
+    def __init__(self, host, tcp_quickack, port=0):
         self.packer = Packer()
         self.unpacker = Unpacker('')
-        rpc.TCPClient.__init__(self, host, DEVICE_CORE_PROG, DEVICE_CORE_VERS, port)
+        rpc.TCPClient.__init__(self, host, DEVICE_CORE_PROG, DEVICE_CORE_VERS, tcp_quickack, port)
 
     def create_link(self, id, lock_device, lock_timeout, name):
         params = (id, lock_device, lock_timeout, name)
@@ -574,6 +574,7 @@ class Device(object):
         self.client_id = client_id
         self.term_char = term_char
         self.lock_timeout = 10
+        self._tcp_quickack = 1
         self.timeout = 10
         self.abort_port = 0
         self.link = None
@@ -607,13 +608,34 @@ class Device(object):
         self._lock_timeout = val
         self._lock_timeout_ms = int(val * 1000)
 
+    @property
+    def tcp_quickack(self):
+        return self._tcp_quickack
+
+    def enable_tcp_quickack(self):
+        #Enable Socket TCP_QUICKACK. This is enabled by default in the socket class.
+        #Should be enabled/disabled before open()
+        if self.client is None:
+            self._tcp_quickack = 1
+        else:
+            raise Vxi11Exception("client already oppened! Use it before open the connection!")
+        
+    def disable_tcp_quickack(self):
+        #Disable Socket TCP_QUICKACK. This should be disabled if your connection is
+        #having a lot of double acks and retransmissions. Should be enabled/disabled before open()
+        #This does nothing for Windows OS
+        if self.client is None:
+            self._tcp_quickack = 0
+        else:
+            raise Vxi11Exception("client already oppened! Use it before open the connection!")
+        
     def open(self):
         "Open connection to VXI-11 device"
         if self.link is not None:
             return
 
         if self.client is None:
-            self.client = CoreClient(self.host)
+            self.client = CoreClient(self.host, self.tcp_quickack)
 
         self.client.sock.settimeout(self.timeout+1)
         error, link, abort_port, max_recv_size = self.client.create_link(
