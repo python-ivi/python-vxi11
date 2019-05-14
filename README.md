@@ -68,3 +68,11 @@ and:
     print(instr.ask("*IDN?"))
     # returns 'AGILENT TECHNOLOGIES,MSO-X 3014A,MY********,02.35.2013061800'
 
+In case of double acks and retransmissions in Unix Like Systems, disable TCP_QUICKACK is an option:
+
+    import vxi11
+    instr =  vxi11.Instrument("192.168.1.104")
+    instr.disable_tcp_quickack()
+    print(instr.ask("*IDN?"))
+    # returns 'AGILENT TECHNOLOGIES,MSO7104A,MY********,06.16.0001'
+    instr.close()

@@ -251,8 +251,9 @@ def recvrecord(sock):
 # Client using TCP to a specific port
 
 class RawTCPClient(Client):
-    def __init__(self, host, prog, vers, port):
+    def __init__(self, host, prog, vers, tcp_quickack, port):
         Client.__init__(self, host, prog, vers, port)
+        self.tcp_quickack = tcp_quickack
         self.connect()
 
     def connect(self):
@@ -264,6 +265,8 @@ class RawTCPClient(Client):
 
     def do_call(self):
         call = self.packer.get_buf()
+        
+        self.configure_socket_options()
         sendrecord(self.sock, call)
         while True:
             reply = recvrecord(self.sock)
@@ -280,6 +283,13 @@ class RawTCPClient(Client):
             else:
                 # xid larger than expected - packet from the future?
                 raise RPCError('wrong xid in reply %r instead of %r' % (xid, self.lastxid))
+    
+    #Reset tcp_quickack case it is 0. If tcp_quickack is 1, socket do it automatically after recv or send operations
+    #Does nothing in Windows OS
+    def configure_socket_options(self):
+        if os.name != 'nt':
+            if self.tcp_quickack == 0:
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 0)
 
 
 # Client using UDP to a specific port
@@ -489,7 +499,7 @@ class PartialPortMapperClient:
 class TCPPortMapperClient(PartialPortMapperClient, RawTCPClient):
 
     def __init__(self, host):
-        RawTCPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, PMAP_PORT)
+        RawTCPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, 1, PMAP_PORT)
         PartialPortMapperClient.__init__(self)
 
 
@@ -511,14 +521,14 @@ class BroadcastUDPPortMapperClient(PartialPortMapperClient, RawBroadcastUDPClien
 
 class TCPClient(RawTCPClient):
 
-    def __init__(self, host, prog, vers, port=0):
+    def __init__(self, host, prog, vers, tcp_quickack, port=0):
         if port == 0:
             pmap = TCPPortMapperClient(host)
             port = pmap.get_port((prog, vers, IPPROTO_TCP, 0))
             pmap.close()
         if port == 0:
             raise RPCError('program not registered')
-        RawTCPClient.__init__(self, host, prog, vers, port)
+        RawTCPClient.__init__(self, host, prog, vers, tcp_quickack, port)
 
 
 class UDPClient(RawUDPClient):
