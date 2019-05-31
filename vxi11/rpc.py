@@ -23,6 +23,7 @@ import xdrlib
 import socket
 import os
 import struct
+import asyncio
 
 RPCVERSION = 2
 
@@ -281,6 +282,84 @@ class RawTCPClient(Client):
                 # xid larger than expected - packet from the future?
                 raise RPCError('wrong xid in reply %r instead of %r' % (xid, self.lastxid))
 
+class AsyncTCPClient(Client):
+    async def connect(self):
+        if self.port == 0:
+            pmap = AsyncTCPPortMapperClient(self.host)
+            await pmap.connect()
+            port = await pmap.get_port((self.prog, self.vers, IPPROTO_TCP, 0))
+            pmap.close()
+        else:
+            port = self.port
+        if port == 0:
+            raise RPCError('program not registered')
+
+        self.reader, self.writer = await asyncio.open_connection(
+            self.host, port)
+
+    def close(self):
+        self.writer.close()
+
+    def sendfrag(self, frag, last=True):
+        x = len(frag)
+
+        if last:
+            x = x | 0x80000000
+        header = struct.pack(">I", x)
+        self.writer.write(header)
+        self.writer.write(frag)
+
+    async def recvfrag(self):
+        header = await self.reader.readexactly(4)
+        x, = struct.unpack(">I", header)
+        last = ((x & 0x80000000) != 0)
+        n = int(x & 0x7fffffff)
+        frag = await self.reader.readexactly(n)
+        return last, frag
+
+    async def recvrecord(self):
+        ret = []
+        last = 0
+        while not last:
+            last, frag = await self.recvfrag()
+            ret.append(frag)
+        return b''.join(ret)
+
+    async def do_call(self):
+        call = self.packer.get_buf()
+        self.sendfrag(call)
+
+        while True:
+            reply = await self.recvrecord()
+            u = self.unpacker
+            u.reset(reply)
+            xid, verf = u.unpack_replyheader()
+            if xid == self.lastxid:
+                # xid matches, we're done
+                return
+            elif xid < self.lastxid:
+                # Stale data in buffer due to interruption
+                # Discard and fetch another record
+                continue
+            else:
+                # xid larger than expected - packet from the future?
+                raise RPCError('wrong xid in reply %r instead of %r' % (xid, self.lastxid))
+
+    async def make_call(self, proc, args, pack_func, unpack_func):
+        # Don't normally override this (but see Broadcast)
+        if pack_func is None and args is not None:
+            raise TypeError('non-null args with null pack_func')
+        self.start_call(proc)
+        if pack_func:
+            pack_func(args)
+        await self.do_call()
+        if unpack_func:
+            result = unpack_func()
+        else:
+            result = None
+        self.unpacker.done()
+        return result
+
 
 # Client using UDP to a specific port
 
@@ -456,7 +535,8 @@ class PortMapperUnpacker(Unpacker):
 
 class PartialPortMapperClient:
 
-    def __init__(self):
+    def __init__(self, host):
+        super(PartialPortMapperClient, self).__init__(host, PMAP_PROG, PMAP_VERS, PMAP_PORT)
         self.packer = PortMapperPacker()
         self.unpacker = PortMapperUnpacker('')
 
@@ -487,24 +567,19 @@ class PartialPortMapperClient:
 
 
 class TCPPortMapperClient(PartialPortMapperClient, RawTCPClient):
-
-    def __init__(self, host):
-        RawTCPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, PMAP_PORT)
-        PartialPortMapperClient.__init__(self)
+    pass
 
 
 class UDPPortMapperClient(PartialPortMapperClient, RawUDPClient):
-
-    def __init__(self, host):
-        RawUDPClient.__init__(self, host, PMAP_PROG, PMAP_VERS, PMAP_PORT)
-        PartialPortMapperClient.__init__(self)
+    pass
 
 
 class BroadcastUDPPortMapperClient(PartialPortMapperClient, RawBroadcastUDPClient):
+    pass
 
-    def __init__(self, bcastaddr):
-        RawBroadcastUDPClient.__init__(self, bcastaddr, PMAP_PROG, PMAP_VERS, PMAP_PORT)
-        PartialPortMapperClient.__init__(self)
+
+class AsyncTCPPortMapperClient(PartialPortMapperClient, AsyncTCPClient):
+    pass
 
 
 # Generic clients that find their server through the Port mapper
