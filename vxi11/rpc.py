@@ -226,17 +226,35 @@ def sendrecord(sock, record):
         sendfrag(sock, 1, record)
 
 def recvfrag(sock):
-    header = sock.recv(4)
+    # constant length readout
+    # TODO could be variable via argument of recvfrag()-function
+    LEN = 1024
+    header = sock.recv(LEN)
     if len(header) < 4:
         raise EOFError
+    # reading out the header
     x = struct.unpack(">I", header[0:4])[0]
+    # 32-bit masking of the header (4 * 8 bits) to get the RPC last fragment indicator
     last = ((x & 0x80000000) != 0)
+    # RPC field announcing the length of the payload (via masking)
     n = int(x & 0x7fffffff)
-    frag = bytearray()
+    # reading out the fragment
+    frag = bytearray( header[4:] )
+    # waiting for the remaining fragments
     while len(frag) < n:
         buf = sock.recv(n - len(frag))
+        # an empty read breaks the accumulating loop
         if not buf: raise EOFError
+        # accumulating the fragments
         frag.extend(buf)
+
+    # below hack: some equipment do not set the last fragment bit to 1
+    # for a RPC Reply to a GET PORT Call, so it is asserted True when
+    # the length of the received data matches the announced length
+    # the issue is described in https://groups.google.com/g/python-ivi/c/vxrdshKG43E/m/plOXFbsopUgJ?pli=1
+    if len(frag)==n and n==28:
+        last=True
+
     return last, frag
 
 def recvrecord(sock):
