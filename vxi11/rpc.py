@@ -19,7 +19,7 @@ Original source: http://svn.python.org/projects/python/trunk/Demo/rpc/rpc.py
 
 """
 
-import xdrlib
+import xdrlib3 as xdrlib
 import socket
 import os
 import struct

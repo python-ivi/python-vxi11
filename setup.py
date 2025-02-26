@@ -48,5 +48,6 @@ instrument control protocol for controlling VXI11 and LXI compatible instruments
             'vxi11-cli = vxi11.cli:main',
         ],
     },
+    install_requires = ['xdrlib3==0.1.1'],
 )
 
